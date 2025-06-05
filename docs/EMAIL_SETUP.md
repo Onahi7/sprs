@@ -29,15 +29,16 @@ EMAIL_FROM="NAPPS SPRS <your-email@gmail.com>"
 
 ### Gmail (Recommended)
 
-1. **Enable 2-Factor Authentication**
-   - Go to Google Account settings
-   - Enable 2-step verification
+1. **Enable 2-Step Verification**
+   - Navigate to https://myaccount.google.com/security
+   - Under "Signing in to Google", click **2-Step Verification** and follow prompts to set up 2FA.
 
-2. **Generate App Password**
-   - Go to Google Account → Security → 2-step verification
-   - Click "App passwords"
-   - Select "Mail" and your device
-   - Copy the generated 16-character password
+2. **Generate an App Password**
+   - Return to https://myaccount.google.com/security
+   - Under "Signing in to Google", click **App passwords** (re-enter your password if prompted).
+   - In the **Select app** dropdown choose **Mail**.
+   - In the **Select device** dropdown choose your device or select **Other (Custom name)** and enter a name like "SPRS App".
+   - Click **Generate** and copy the 16-character password.
 
 3. **Configuration**
    ```env

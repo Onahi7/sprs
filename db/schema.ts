@@ -76,12 +76,48 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
+// Subject model
+export const subjects = pgTable("subjects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  maxScore: integer("max_score").notNull().default(100),
+  minScore: integer("min_score").notNull().default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+// Result Entry Users model (for chapter-specific result entry access)
+export const resultEntryUsers = pgTable("result_entry_users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  chapterId: integer("chapter_id").references(() => chapters.id),
+  name: text("name").notNull(),
+  email: text("email"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+// Student Results model
+export const studentResults = pgTable("student_results", {
+  id: serial("id").primaryKey(),
+  registrationId: integer("registration_id").references(() => registrations.id),
+  subjectId: integer("subject_id").references(() => subjects.id),
+  score: integer("score").notNull(),
+  grade: text("grade"),
+  enteredBy: integer("entered_by").references(() => resultEntryUsers.id),
+  enteredAt: timestamp("entered_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
 // Define relations
 export const chaptersRelations = relations(chapters, ({ many }) => ({
   schools: many(schools),
   centers: many(centers),
   registrations: many(registrations),
   coordinators: many(chapterCoordinators),
+  resultEntryUsers: many(resultEntryUsers),
 }))
 
 export const schoolsRelations = relations(schools, ({ one, many }) => ({
@@ -100,7 +136,7 @@ export const centersRelations = relations(centers, ({ one, many }) => ({
   registrations: many(registrations),
 }))
 
-export const registrationsRelations = relations(registrations, ({ one }) => ({
+export const registrationsRelations = relations(registrations, ({ one, many }) => ({
   chapter: one(chapters, {
     fields: [registrations.chapterId],
     references: [chapters.id],
@@ -113,11 +149,39 @@ export const registrationsRelations = relations(registrations, ({ one }) => ({
     fields: [registrations.centerId],
     references: [centers.id],
   }),
+  results: many(studentResults),
 }))
 
 export const chapterCoordinatorsRelations = relations(chapterCoordinators, ({ one }) => ({
   chapter: one(chapters, {
     fields: [chapterCoordinators.chapterId],
     references: [chapters.id],
+  }),
+}))
+
+export const subjectsRelations = relations(subjects, ({ many }) => ({
+  results: many(studentResults),
+}))
+
+export const resultEntryUsersRelations = relations(resultEntryUsers, ({ one, many }) => ({
+  chapter: one(chapters, {
+    fields: [resultEntryUsers.chapterId],
+    references: [chapters.id],
+  }),
+  results: many(studentResults),
+}))
+
+export const studentResultsRelations = relations(studentResults, ({ one }) => ({
+  registration: one(registrations, {
+    fields: [studentResults.registrationId],
+    references: [registrations.id],
+  }),
+  subject: one(subjects, {
+    fields: [studentResults.subjectId],
+    references: [subjects.id],
+  }),
+  enteredByUser: one(resultEntryUsers, {
+    fields: [studentResults.enteredBy],
+    references: [resultEntryUsers.id],
   }),
 }))

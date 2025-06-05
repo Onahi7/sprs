@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { AdminStats } from "./admin-stats"
 import { AdminChart } from "./admin-chart"
 import { AdminRegistrationsTable } from "./admin-registrations-table"
+import { AdminResultsManagement } from "./admin-results-management"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -225,7 +226,7 @@ export function AdminDashboard() {
         totalSchools={stats?.totalSchools}
       />
       
-      <Tabs defaultValue="overview" className="space-y-4">        <TabsList className="grid grid-cols-4 md:w-auto w-full">
+      <Tabs defaultValue="overview" className="space-y-4">        <TabsList className="grid grid-cols-5 md:w-auto w-full">
           <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
@@ -233,6 +234,10 @@ export function AdminDashboard() {
           <TabsTrigger value="registrations" onClick={() => setActiveTab("registrations")}>
             <TrendingUp className="h-4 w-4 mr-2" />
             Registrations
+          </TabsTrigger>
+          <TabsTrigger value="results" onClick={() => setActiveTab("results")}>
+            <Database className="h-4 w-4 mr-2" />
+            Results
           </TabsTrigger>
           <TabsTrigger value="charts" onClick={() => setActiveTab("charts")}>
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -290,8 +295,7 @@ export function AdminDashboard() {
             </Card>
           </div>
         </TabsContent>
-        
-        <TabsContent value="registrations" className="space-y-4">
+          <TabsContent value="registrations" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>All Registrations</CardTitle>
@@ -303,6 +307,10 @@ export function AdminDashboard() {
               <AdminRegistrationsTable />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="results" className="space-y-4">
+          <AdminResultsManagement />
         </TabsContent>
           <TabsContent value="charts" className="space-y-4">
           <Card>

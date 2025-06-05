@@ -79,6 +79,7 @@
     "gel": "latest",
     "glob": "^11.0.2",
     "input-otp": "1.4.1",
+    "jsbarcode": "^3.11.6",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.1",
     "knex": "latest",
@@ -95,6 +96,7 @@
     "papaparse": "latest",
     "pg": "^8.15.6",
     "postgres": "latest",
+    "qrcode-generator": "^1.4.4",
     "react": "^19",
     "react-chartjs-2": "latest",
     "react-day-picker": "8.10.1",
@@ -112,9 +114,11 @@
     "zod": "latest"
   },
   "devDependencies": {
+    "@types/jsbarcode": "^3.11.4",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.17",
+    "@types/qrcode-generator": "^1.0.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",

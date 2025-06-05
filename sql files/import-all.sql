@@ -29,12 +29,17 @@
 \i coordinators.sql
 
 \echo ''
-\echo 'Step 5/5: Importing registrations data...'
+\echo 'Step 5/6: Importing registrations data...'
 \i registrations.sql
+
+\echo ''
+\echo 'Step 6/6: Setting up result entry functionality...'
+\i results-migration.sql
 
 \echo ''
 \echo '============================================'
 \echo 'NAPPS Nasarawa State Data Import Complete!'
+\echo 'Including Result Entry System Setup!'
 \echo '============================================'
 
 -- Display final statistics
@@ -62,6 +67,21 @@ SELECT
   'registrations' as table_name, 
   COUNT(*) as record_count 
 FROM registrations
+UNION ALL
+SELECT 
+  'subjects' as table_name, 
+  COUNT(*) as record_count 
+FROM subjects
+UNION ALL
+SELECT 
+  'result_entry_users' as table_name, 
+  COUNT(*) as record_count 
+FROM result_entry_users
+UNION ALL
+SELECT 
+  'student_results' as table_name, 
+  COUNT(*) as record_count 
+FROM student_results
 ORDER BY table_name;
 
 \echo ''

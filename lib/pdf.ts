@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import JsBarcode from 'jsbarcode';
 import { formatDate } from "@/lib/utils";
 
 interface RegistrationData {
@@ -41,7 +42,35 @@ interface RegistrationData {
   } | null;
 }
 
-// Helper function to convert image URL to base64
+// Helper function to generate barcode image
+function generateBarcodeBase64(data: string): string | null {
+  try {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 60;
+      
+      JsBarcode(canvas, data, {
+        format: "CODE128",
+        width: 2,
+        height: 40,
+        displayValue: false,
+        margin: 0,
+        background: "#ffffff",
+        lineColor: "#000000"
+      });
+      
+      return canvas.toDataURL('image/png');
+    }
+    
+    // For server-side, we'll use a fallback or could implement with node-canvas
+    return null;
+  } catch (error) {
+    console.error('Error generating barcode:', error);
+    return null;
+  }
+}
 async function imageUrlToBase64(url: string): Promise<string> {
   try {
     const response = await fetch(url);
@@ -289,28 +318,55 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.text('• Present this slip on examination day for verification', 25, yPos + 11);
-    doc.text('• Arrive at the examination center 30 minutes before the scheduled time', 25, yPos + 14);
-    doc.text('• Bring valid identification and writing materials', 25, yPos + 17);// Authentication barcode section
+    doc.text('• Arrive at the examination center 30 minutes before the scheduled time', 25, yPos + 14);    doc.text('• Bring valid identification and writing materials', 25, yPos + 17);
+    
+    // Authentication barcode section
     yPos += 35;
     
-    // Generate a simple barcode using registration number
+    // Generate professional barcode using JsBarcode
     const barcodeData = `NAPPS${registration.registrationNumber}${new Date().getFullYear()}`;
     const barcodeX = 15;
     const barcodeY = yPos;
-    const barcodeWidth = 60;
-    const barcodeHeight = 10;
+    const barcodeWidth = 80;
+    const barcodeHeight = 12;
     
-    // Simple barcode representation using lines
-    doc.setFillColor(...primaryText);
-    let barX = barcodeX;
-    for (let i = 0; i < barcodeData.length; i++) {
-      const charCode = barcodeData.charCodeAt(i);
-      const barWidth = (charCode % 3) + 1; // Variable width based on character
-      if (i % 2 === 0) {
-        doc.rect(barX, barcodeY, barWidth, barcodeHeight, 'F');
+    // Try to generate a professional barcode
+    const barcodeImage = generateBarcodeBase64(barcodeData);
+    
+    if (barcodeImage) {
+      // Add the generated barcode image
+      doc.addImage(barcodeImage, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
+    } else {
+      // Fallback to enhanced simple barcode representation
+      doc.setFillColor(...primaryText);
+      doc.setLineWidth(0.3);
+      
+      // Create a more professional-looking barcode pattern
+      let barX = barcodeX;
+      const pattern = barcodeData.split('').map(char => char.charCodeAt(0));
+      
+      for (let i = 0; i < pattern.length && barX < barcodeX + barcodeWidth; i++) {
+        const value = pattern[i] % 10;
+        
+        // Create varying bar widths based on the character value
+        for (let j = 0; j < 3; j++) {
+          const barWidth = ((value + j) % 3) + 0.5;
+          const shouldDraw = (value + j) % 2 === 0;
+          
+          if (shouldDraw) {
+            doc.setFillColor(...primaryText);
+            doc.rect(barX, barcodeY, barWidth, barcodeHeight, 'F');
+          }
+          
+          barX += barWidth + 0.3;
+          if (barX >= barcodeX + barcodeWidth) break;
+        }
       }
-      barX += barWidth + 0.5;
-      if (barX > barcodeX + barcodeWidth) break;
+      
+      // Add border around barcode
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(0.5);
+      doc.rect(barcodeX - 1, barcodeY - 1, barcodeWidth + 2, barcodeHeight + 2, 'S');
     }
     
     // Barcode label
@@ -318,7 +374,7 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
     doc.text('Verification Code:', barcodeX, barcodeY + barcodeHeight + 4);
-    doc.text(barcodeData.substring(0, 20), barcodeX, barcodeY + barcodeHeight + 8);
+    doc.text(barcodeData, barcodeX, barcodeY + barcodeHeight + 8);
     
     // Authentication stamp area
     doc.setDrawColor(...borderColor);
