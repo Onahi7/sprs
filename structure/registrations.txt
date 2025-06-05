@@ -1,0 +1,18 @@
+	1	id Primary	mediumint(9)			No	None		AUTO_INCREMENT	Change Change	Drop Drop	
+	2	registration_number Index	varchar(20)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	3	first_name	varchar(50)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	4	middle_name	varchar(50)	utf8mb4_unicode_520_ci		Yes	NULL			Change Change	Drop Drop	
+	5	last_name	varchar(50)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	6	chapter_id Index	mediumint(9)			No	None			Change Change	Drop Drop	
+	7	school_id Index	mediumint(9)			No	None			Change Change	Drop Drop	
+	8	center_id Index	mediumint(9)			No	None			Change Change	Drop Drop	
+	9	parent_first_name	varchar(50)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	10	parent_last_name	varchar(50)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	11	parent_phone	varchar(20)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	12	parent_email	varchar(100)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	13	passport_url	varchar(255)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	
+	14	payment_status	enum('pending', 'completed')	utf8mb4_unicode_520_ci		Yes	pending			Change Change	Drop Drop	
+	15	payment_reference	varchar(100)	utf8mb4_unicode_520_ci		Yes	NULL			Change Change	Drop Drop	
+	16	created_at	datetime			Yes	current_timestamp()			Change Change	Drop Drop	
+	17	school_name	varchar(100)	utf8mb4_unicode_520_ci		Yes	NULL			Change Change	Drop Drop	
+	18	parent_consent	tinyint(1)

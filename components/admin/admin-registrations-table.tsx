@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DownloadIcon, Search } from "lucide-react"
+import { DownloadIcon, Search, FileText } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -105,6 +105,10 @@ export function AdminRegistrationsTable() {
     } catch (error) {
       console.error("Error exporting to CSV:", error)
     }
+  }
+
+  const handlePrintSlip = (registrationNumber: string) => {
+    window.open(`/api/registrations/${registrationNumber}/slip`, "_blank")
   }
 
   if (loading) {
@@ -229,12 +233,13 @@ export function AdminRegistrationsTable() {
               <TableHead>School</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Payment Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {registrations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No registrations found
                 </TableCell>
               </TableRow>
@@ -262,6 +267,18 @@ export function AdminRegistrationsTable() {
                     >
                       {registration.paymentStatus === "completed" ? "Completed" : "Pending"}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {registration.paymentStatus === "completed" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handlePrintSlip(registration.registrationNumber)}
+                        title="Print Registration Slip"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

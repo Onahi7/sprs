@@ -1,5 +1,44 @@
+// --- NextAuth options for API routes ---
+import type { NextAuthOptions } from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // TODO: Replace with real user lookup
+        if (credentials?.username === "admin" && credentials?.password === "admin") {
+          return { id: "1", name: "Admin", role: "admin" } as any
+        }
+        return null
+      }
+    })
+  ],
+  session: { strategy: "jwt" },
+  callbacks: {
+    async session({ session, token }) {
+      if (!session.user) session.user = {} as any
+      // TypeScript: session.user is now always defined
+      if (token?.role) (session.user as any).role = token.role as string
+      if (token?.id) (session.user as any).id = token.id as string
+      return session
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role
+        token.id = (user as any).id
+      }
+      return token
+    }
+  }
+}
 import { cookies } from "next/headers"
-import { sign, verify, Secret, SignOptions } from "jsonwebtoken"
+import * as jose from 'jose'
 import { chapterCoordinators } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { getDbConnection } from "@/db/utils"
@@ -16,25 +55,41 @@ export interface UserSession {
  * Get the current user session from the cookies
  */
 export async function getSession(): Promise<UserSession | null> {
+  console.log("getSession: Reading cookies...")
   const cookieStore = await cookies()
   const token = cookieStore.get("auth_token")?.value
   
+  console.log("getSession: Auth token found?", !!token)
   if (!token) {
+    console.log("getSession: No token found, returning null")
     return null
   }
   
   try {
-    const decoded = verify(
-      token, 
-      process.env.JWT_SECRET || "fallback-secret-key-change-in-production"
-    ) as UserSession & { exp: number }
+    console.log("getSession: Verifying token...")
+    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key-change-in-production"
+    console.log("getSession: Using JWT secret:", jwtSecret.substring(0, 3) + "...")
+    
+    // Using jose library for Edge Runtime compatibility
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jose.jwtVerify(token, secret);
+    
+    const decoded = payload as unknown as UserSession & { exp: number };
+    
+    console.log("getSession: Token verified successfully:", JSON.stringify({
+      username: decoded.username,
+      role: decoded.role,
+      exp: new Date(decoded.exp * 1000).toISOString()
+    }))
     
     // Check if token is expired
     const now = Math.floor(Date.now() / 1000)
     if (decoded.exp < now) {
+      console.log("getSession: Token is expired", decoded.exp, now)
       return null
     }
     
+    console.log("getSession: Returning valid session")
     return {
       id: decoded.id,
       username: decoded.username,
@@ -43,7 +98,19 @@ export async function getSession(): Promise<UserSession | null> {
       chapterName: decoded.chapterName
     }
   } catch (error) {
-    console.error("Token verification failed:", error)
+    console.error("getSession: Token verification failed:", error)
+    
+    try {
+      // Attempt to decode the token without verification to check its structure
+      const decodedWithoutVerify = JSON.parse(
+        Buffer.from(token.split('.')[1], 'base64').toString()
+      );
+      console.error("getSession: Token payload (without verification):", JSON.stringify(decodedWithoutVerify));
+    } catch (parseError) {
+      console.error("getSession: Could not parse token payload:", parseError);
+    }
+    
+    console.error("getSession: Token content (first part):", token.substring(0, 10) + "...")
     return null
   }
 }
@@ -80,11 +147,15 @@ export function generateRandomCode(length = 8): string {
 /**
  * Create auth token for a user session
  */
-export function createAuthToken(session: UserSession): string {
-  const secretKey: Secret = process.env.JWT_SECRET || "fallback-secret-key-change-in-production"
-  const options: SignOptions = { expiresIn: 24 * 60 * 60 } // 24 hours
+export async function createAuthToken(session: UserSession): Promise<string> {
+  const secretKey = process.env.JWT_SECRET || "fallback-secret-key-change-in-production"
+  const secret = new TextEncoder().encode(secretKey);
   
-  return sign(session, secretKey, options)
+  // Using jose library for Edge Runtime compatibility
+  return await new jose.SignJWT({ ...session })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('24h')
+    .sign(secret);
 }
 
 /**

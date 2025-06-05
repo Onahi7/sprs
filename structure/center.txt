@@ -1,0 +1,3 @@
+	1	id Primary	mediumint(9)			No	None		AUTO_INCREMENT	Change Change	Drop Drop	
+	2	chapter_id Index	mediumint(9)			No	None			Change Change	Drop Drop	
+	3	name	varchar(100)	utf8mb4_unicode_520_ci		No	None			Change Change	Drop Drop	

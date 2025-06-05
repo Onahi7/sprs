@@ -33,11 +33,14 @@ export default function PaymentInitializePage() {
         })
 
         const data = await response.json()
+        console.log("Payment initialization response:", data)
 
         if (response.ok && data.success) {
           // Redirect to Paystack payment page
-          window.location.href = data.paymentUrl
+          console.log("Redirecting to payment page:", data.authorizationUrl)
+          window.location.href = data.authorizationUrl
         } else {
+          console.error("Payment initialization failed:", data.error)
           setError(data.error || "Failed to initialize payment")
           setLoading(false)
         }
@@ -78,7 +81,7 @@ export default function PaymentInitializePage() {
           <p className="text-center text-red-500 mb-6">{error}</p>
           <div className="flex flex-col w-full gap-4">
             <Button asChild>
-              <Link href={`/status?registrationNumber=${registrationId}`}>Return to Registration Status</Link>
+              <Link href="/status">Return to Registration Status</Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href="/">Return to Home</Link>

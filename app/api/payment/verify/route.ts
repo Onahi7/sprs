@@ -30,6 +30,8 @@ export async function GET(request: Request) {
       where: eq(registrations.paymentReference, reference),
       with: {
         chapter: true,
+        school: true,
+        center: true,
       },
     })
 
@@ -57,6 +59,15 @@ export async function GET(request: Request) {
       data: {
         registrationNumber: registration.registrationNumber,
         paymentStatus: "completed",
+        firstName: registration.firstName,
+        middleName: registration.middleName,
+        lastName: registration.lastName,
+        chapterName: registration.chapter?.name,
+        schoolName: registration.schoolName || registration.school?.name,
+        centerName: registration.center?.name,
+        paymentReference: reference,
+        createdAt: registration.createdAt,
+        passportUrl: registration.passportUrl,
       },
     })
   } catch (error) {

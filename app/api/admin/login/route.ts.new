@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server"
+import { eq } from "drizzle-orm"
+import { getDbConnection } from "@/db/utils"
+import { sign } from "jsonwebtoken"
+import { cookies } from "next/headers"
+import * as bcrypt from 'bcryptjs'
+import { administrators } from "@/db/schema"
+
+export async function POST(request: Request) {
+  try {
+    const { username, password } = await request.json()
+
+    if (!username || !password) {
+      return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
+    }
+
+    // Connect to the database
+    const db = getDbConnection();
+    
+    // Query the administrators table using raw SQL since we have issues with Drizzle ORM
+    const result = await db.execute(
+      `SELECT * FROM administrators WHERE username = $1 LIMIT 1`,
+      [username]
+    );
+    
+    const admin = result.rows[0];
+    
+    // Check if admin exists
+    if (!admin) {
+      console.log("Admin login failed: Admin not found for username:", username);
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    }
+    
+    // Check if admin is active
+    if (admin.is_active === false) {
+      console.log("Admin login failed: Account is inactive for username:", username);
+      return NextResponse.json({ error: "Account is inactive" }, { status: 403 })
+    }
+    
+    // Verify password with bcrypt
+    const storedPassword = admin.password as string;
+    if (!bcrypt.compareSync(password, storedPassword)) {
+      console.log("Admin login failed: Password incorrect for username:", username);
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    }
+
+    // Create a JWT token
+    const token = sign(
+      { 
+        username, 
+        role: "admin"
+      },
+      process.env.JWT_SECRET || "fallback-secret-key-change-in-production",
+      { expiresIn: "24h" }
+    );
+    
+    // Set the token in a cookie
+    const response = NextResponse.json({ 
+      success: true,
+      message: "Login successful" 
+    });
+    
+    response.cookies.set("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60, // 24 hours
+      path: "/",
+    });
+
+    console.log("Admin login successful for:", username);
+    
+    return response;
+    
+  } catch (error) {
+    console.error("Error logging in admin:", error)
+    
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes('database')) {
+      return NextResponse.json({ 
+        error: "Database connection failed",
+        details: error.message
+      }, { status: 500 })
+    }
+    
+    // Generic error response
+    return NextResponse.json({ 
+      error: "Failed to log in",
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 })
+  }
+}

@@ -23,7 +23,7 @@ export async function POST() {
       where: and(
         eq(registrations.paymentStatus, "pending"),
         isNotNull(registrations.paymentReference),
-        lt(registrations.updatedAt || registrations.createdAt, thirtyMinutesAgo),
+        lt(registrations.createdAt, thirtyMinutesAgo),
       ),
     })
 
@@ -53,7 +53,6 @@ export async function POST() {
             .update(registrations)
             .set({
               paymentStatus: "completed",
-              updatedAt: new Date(),
             })
             .where(eq(registrations.id, registration.id))
           
@@ -68,17 +67,10 @@ export async function POST() {
       success: true,
       message: `Verified ${updatedCount} out of ${pendingRegistrations.length} pending transactions`,
       updatedCount,
-    })
-  } catch (error) {
-    console.error("Error verifying pending transactions:", error)
-    return NextResponse.json({ error: "Failed to verify transactions" }, { status: 500 })
-  }
-}
-      verifiedCount,
       totalCount: pendingRegistrations.length,
     })
   } catch (error) {
     console.error("Error verifying pending transactions:", error)
-    return NextResponse.json({ error: "Failed to verify pending transactions" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to verify transactions" }, { status: 500 })
   }
 }

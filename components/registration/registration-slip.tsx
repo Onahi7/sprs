@@ -17,14 +17,30 @@ export function RegistrationSlip({ registration }: RegistrationSlipProps) {
 
   return (
     <Card className="border-2 border-gray-300 print:shadow-none">
-      <CardHeader className="bg-gray-100 dark:bg-gray-800 border-b text-center py-4 flex flex-col items-center justify-between print:flex-row">
+      <CardHeader className="bg-blue-50 dark:bg-blue-900/20 border-b text-center py-6 flex flex-col items-center justify-between print:flex-row">
         <div className="flex flex-col items-center">
-          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-xl font-bold">SPRS</span>
+          <div className="w-20 h-20 mb-3">
+            <Image
+              src="https://res.cloudinary.com/dbbzy6j4s/image/upload/v1749089475/sprs_passports/sprs_passports/passport_Hji2hREF.png"
+              alt="NAPPS Nasarawa Logo"
+              width={80}
+              height={80}
+              className="object-contain w-full h-full"
+              onError={(e) => {
+                // Fallback to SVG logo if PNG fails
+                const target = e.target as HTMLImageElement;
+                target.src = "https://res.cloudinary.com/dbbzy6j4s/image/upload/v1749089475/sprs_passports/sprs_passports/passport_Hji2hREF.png";
+              }}
+            />
           </div>
-          <h2 className="text-xl font-bold mt-2">Student Project Registration Slip</h2>
-          <p className="text-sm text-muted-foreground">
-            Registration Number: <span className="font-semibold">{registration.registrationNumber}</span>
+          <h1 className="text-lg font-bold text-blue-800 dark:text-blue-200">
+            NAPPS NASARAWA STATE
+          </h1>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mt-1">
+            UNIFIED EXAMS REGISTRATION SLIP
+          </h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            Registration Number: <span className="font-semibold text-blue-600">{registration.registrationNumber}</span>
           </p>
         </div>
         <Button onClick={handleDownloadPDF} className="mt-4 print:hidden">
@@ -105,9 +121,14 @@ export function RegistrationSlip({ registration }: RegistrationSlipProps) {
         <div className="mt-8 pt-6 border-t">
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-1">
-              Please bring this registration slip and a valid ID to the exam center on the day of the project.
+              Please bring this registration slip and a valid ID to the exam center on the examination day.
             </p>
-            <p className="text-xs text-muted-foreground">This slip serves as proof of registration. Keep it safe.</p>
+            <p className="text-xs text-muted-foreground">
+              This slip serves as proof of registration for NAPPS Nasarawa Unified Exams. Keep it safe.
+            </p>
+            <div className="mt-3 text-xs text-blue-600">
+              <p>National Association of Proprietors of Private Schools - Nasarawa State Chapter</p>
+            </div>
           </div>
         </div>
       </CardContent>

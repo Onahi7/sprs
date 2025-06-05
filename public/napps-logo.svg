@@ -1,0 +1,33 @@
+<!-- NAPPS Nasarawa Logo SVG -->
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="#0066CC" stroke="#004499" stroke-width="3"/>
+  
+  <!-- Inner Circle -->
+  <circle cx="100" cy="100" r="80" fill="white" stroke="#0066CC" stroke-width="2"/>
+  
+  <!-- NAPPS Text -->
+  <text x="100" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#0066CC">NAPPS</text>
+  
+  <!-- Nasarawa Text -->
+  <text x="100" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#004499">NASARAWA</text>
+  
+  <!-- Education Symbol - Book -->
+  <rect x="85" y="105" width="30" height="20" fill="#0066CC" rx="2"/>
+  <line x1="90" y1="110" x2="110" y2="110" stroke="white" stroke-width="1"/>
+  <line x1="90" y1="115" x2="105" y2="115" stroke="white" stroke-width="1"/>
+  <line x1="90" y1="120" x2="110" y2="120" stroke="white" stroke-width="1"/>
+  
+  <!-- Education Symbol - Graduation Cap -->
+  <polygon points="100,130 85,140 115,140" fill="#FFD700"/>
+  <rect x="98" y="135" width="4" height="8" fill="#FFD700"/>
+  <circle cx="102" cy="143" r="2" fill="#FFD700"/>
+  
+  <!-- Excellence Stars -->
+  <polygon points="65,50 67,56 73,56 68,60 70,66 65,62 60,66 62,60 57,56 63,56" fill="#FFD700"/>
+  <polygon points="135,50 137,56 143,56 138,60 140,66 135,62 130,66 132,60 127,56 133,56" fill="#FFD700"/>
+  
+  <!-- Bottom Text -->
+  <text x="100" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#0066CC">UNIFIED EXAMS</text>
+  <text x="100" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-size="6" fill="#004499">EXCELLENCE IN EDUCATION</text>
+</svg>

@@ -8,8 +8,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Student Project Registration System",
-  description: "A comprehensive registration system for student projects",
+  title: "NAPPS Nasarawa State Unified Exams",
+  description: "NAPPS Nasarawa State Unified Examination System",
     generator: 'v0dev'
 }
 

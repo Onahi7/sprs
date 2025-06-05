@@ -1,0 +1,6 @@
+id                     serial        PRIMARY KEY 
+username               text          UNIQUE NOT NULL
+password               text          NOT NULL
+email                  text
+is_active              boolean       DEFAULT TRUE
+created_at             timestamp     DEFAULT CURRENT_TIMESTAMP

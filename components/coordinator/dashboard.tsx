@@ -28,6 +28,7 @@ export function CoordinatorDashboard() {
   const [coordinator, setCoordinator] = useState<any>(null)
   const [chapterId, setChapterId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
+  const [recentActivity, setRecentActivity] = useState<any[]>([])
   
   useEffect(() => {
     async function fetchDashboardData() {
@@ -37,8 +38,7 @@ export function CoordinatorDashboard() {
         // Fetch coordinator info from session
         const userResponse = await fetch('/api/auth/session')
         const userData = await userResponse.json()
-        
-        if (userData && userData.user && userData.user.chapterId) {
+          if (userData && userData.user && userData.user.chapterId) {
           setChapterId(userData.user.chapterId);
           setCoordinator(userData.user);
           
@@ -46,6 +46,11 @@ export function CoordinatorDashboard() {
           const statsResponse = await fetch(`/api/coordinator/dashboard/stats?chapterId=${userData.user.chapterId}`)
           const statsData = await statsResponse.json()
           setStats(statsData)
+
+          // Fetch recent activity
+          const activityResponse = await fetch(`/api/coordinator/dashboard/recent-activity?chapterId=${userData.user.chapterId}`)
+          const activityData = await activityResponse.json()
+          setRecentActivity(activityData)
         } else {
           // Handle case where user data is not available
           toast({
@@ -75,7 +80,7 @@ export function CoordinatorDashboard() {
         description: "Please wait while we prepare your data export.",
       })
       
-      const response = await fetch(`/api/coordinator/export?chapterId=${chapterId}`)
+      const response = await fetch(`/api/coordinator/export?chapterId=${chapterId || 0}`)
       
       if (!response.ok) {
         throw new Error("Export failed")
@@ -199,9 +204,8 @@ export function CoordinatorDashboard() {
               <CardHeader>
                 <CardTitle>Registration Trends</CardTitle>
                 <CardDescription>Daily registration and payment counts</CardDescription>
-              </CardHeader>
-              <CardContent className="px-2">
-                <RegistrationChart chapterId={chapterId} />
+              </CardHeader>              <CardContent className="px-2">
+                <RegistrationChart chapterId={chapterId || 0} />
               </CardContent>
             </Card>
             
@@ -209,23 +213,31 @@ export function CoordinatorDashboard() {
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>Latest registrations from your chapter</CardDescription>
-              </CardHeader>
-              <CardContent>
+              </CardHeader>              <CardContent>
                 <div className="space-y-4">
-                  {Array.from({length: 4}).map((_, i) => (
-                    <div key={i} className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">New registration from {['Primary 6', 'JSS 3', 'Primary 5', 'SSS 3'][i]}</p>
-                        <div className="flex text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" /> 
-                          <span>{i*15+5} minutes ago</span>
-                        </div>
-                      </div>
-                      <Badge variant={Math.random() > 0.3 ? 'default' : 'outline'} className="ml-auto">
-                        {Math.random() > 0.3 ? 'Paid' : 'Pending'}
-                      </Badge>
+                  {recentActivity.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No recent activity
                     </div>
-                  ))}
+                  ) : (
+                    recentActivity.map((activity, i) => (
+                      <div key={activity.id} className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium">
+                            {activity.studentName} from {activity.schoolName}
+                          </p>
+                          <div className="flex text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 mr-1" /> 
+                            <span>{activity.timeAgo}</span>
+                          </div>
+                        </div>
+                        <Badge variant={activity.paymentStatus === 'completed' ? 'default' : 'outline'} className="ml-auto">
+                          {activity.paymentStatus === 'completed' ? 'Paid' : 'Pending'}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -239,9 +251,8 @@ export function CoordinatorDashboard() {
               <CardDescription>
                 Manage and view all registrations from your chapter
               </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RegistrationsTable chapterId={chapterId} />
+            </CardHeader>            <CardContent>
+              <RegistrationsTable chapterId={chapterId || 0} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -253,9 +264,8 @@ export function CoordinatorDashboard() {
               <CardDescription>
                 View detailed registration trends over time
               </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RegistrationChart chapterId={chapterId} />
+            </CardHeader>            <CardContent>
+              <RegistrationChart chapterId={chapterId || 0} />
             </CardContent>
           </Card>
         </TabsContent>

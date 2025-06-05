@@ -20,13 +20,17 @@ export default function RegistrationConfirmationEmail({
   return (
     <Html>
       <Head />
-      <Preview>Your Student Project Registration Confirmation</Preview>
+      <Preview>NAPPS Nasarawa Unified Exams Registration Confirmation</Preview>
       <Body style={main}>
         <Container style={container}>
+          <Section style={logoSection}>
+            <Text style={logoText}>NAPPS NASARAWA STATE</Text>
+            <Text style={subHeading}>UNIFIED EXAMS</Text>
+          </Section>
           <Heading style={h1}>Registration Confirmation</Heading>
           <Text style={text}>Dear {name},</Text>
           <Text style={text}>
-            Thank you for registering for the Student Project. Your registration has been received successfully.
+            Thank you for registering for the NAPPS Nasarawa State Unified Exams. Your registration has been received successfully.
           </Text>
 
           <Section style={detailsSection}>
@@ -71,7 +75,10 @@ export default function RegistrationConfirmationEmail({
           <Hr style={hr} />
 
           <Text style={footer}>
-            If you have any questions, please contact your chapter coordinator or email us at support@sprs.org.
+            If you have any questions, please contact your chapter coordinator or email us at support@nappsnasarawa.com.
+          </Text>
+          <Text style={organizationFooter}>
+            National Association of Proprietors of Private Schools - Nasarawa State Chapter
           </Text>
         </Container>
       </Body>
@@ -158,4 +165,35 @@ const footer = {
   fontSize: "14px",
   fontStyle: "italic",
   textAlign: "center" as const,
+  margin: "10px 0",
+}
+
+const organizationFooter = {
+  color: "#0066CC",
+  fontSize: "12px",
+  fontWeight: "bold",
+  textAlign: "center" as const,
+  margin: "5px 0",
+}
+
+const logoSection = {
+  textAlign: "center" as const,
+  marginBottom: "20px",
+  paddingBottom: "15px",
+  borderBottom: "2px solid #0066CC",
+}
+
+const logoText = {
+  color: "#0066CC",
+  fontSize: "20px",
+  fontWeight: "bold",
+  margin: "0",
+  letterSpacing: "1px",
+}
+
+const subHeading = {
+  color: "#333",
+  fontSize: "16px",
+  fontWeight: "bold",
+  margin: "5px 0 0 0",
 }

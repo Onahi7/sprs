@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { db } from "@/db"
+import { getDbConnection } from "@/db/utils"
 import { centers } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const chapterId = searchParams.get("chapterId")
+    const db = getDbConnection()
 
     const query = db.query.centers
     let result
@@ -37,6 +38,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { name, chapterId } = await request.json()
+    const db = getDbConnection()
 
     if (!name || !chapterId) {
       return NextResponse.json({ error: "Name and chapter ID are required" }, { status: 400 })

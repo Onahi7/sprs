@@ -17,8 +17,10 @@ import {
   AlertCircle, 
   Calendar, 
   Clock,
-  BarChart3
+  BarChart3,
+  Database
 } from "lucide-react"
+import { SqlImport } from "./sql-import"
 
 export function AdminDashboard() {
   const { toast } = useToast()
@@ -26,9 +28,9 @@ export function AdminDashboard() {
   const [stats, setStats] = useState<any>(null)
   const [verifying, setVerifying] = useState(false)
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [recentActivity, setRecentActivity] = useState<any[]>([])
   
-  useEffect(() => {
-    async function fetchDashboardData() {
+  useEffect(() => {    async function fetchDashboardData() {
       try {
         setLoading(true)
         
@@ -37,6 +39,12 @@ export function AdminDashboard() {
         const statsData = await statsResponse.json()
         
         setStats(statsData)
+
+        // Fetch recent activity
+        const activityResponse = await fetch(`/api/admin/dashboard/recent-activity`)
+        const activityData = await activityResponse.json()
+        
+        setRecentActivity(activityData)
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
         toast({
@@ -49,7 +57,21 @@ export function AdminDashboard() {
       }
     }
     
+    // Function to handle dashboard refresh events
+    const handleRefreshDashboard = () => {
+      fetchDashboardData();
+    };
+
+    // Add event listener for dashboard refresh
+    window.addEventListener('refreshDashboardData', handleRefreshDashboard);
+    
+    // Initial data fetch
     fetchDashboardData()
+    
+    // Cleanup event listener on unmount
+    return () => {
+      window.removeEventListener('refreshDashboardData', handleRefreshDashboard);
+    };
   }, [toast])
     const handleExportData = async () => {
     try {
@@ -203,8 +225,7 @@ export function AdminDashboard() {
         totalSchools={stats?.totalSchools}
       />
       
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-3 md:w-auto w-full">
+      <Tabs defaultValue="overview" className="space-y-4">        <TabsList className="grid grid-cols-4 md:w-auto w-full">
           <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
@@ -216,6 +237,10 @@ export function AdminDashboard() {
           <TabsTrigger value="charts" onClick={() => setActiveTab("charts")}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger value="imports" onClick={() => setActiveTab("imports")}>
+            <Database className="h-4 w-4 mr-2" />
+            Data Import
           </TabsTrigger>
         </TabsList>
         
@@ -235,24 +260,31 @@ export function AdminDashboard() {
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>Latest registrations across all chapters</CardDescription>
-              </CardHeader>
-              <CardContent>
+              </CardHeader>              <CardContent>
                 <div className="space-y-4">
-                  {Array.from({length: 5}).map((_, i) => (
-                    <div key={i} className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">New registration from Chapter {i+1}</p>
-                        <div className="flex text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" /> 
-                          <span>{i*10+5} minutes ago</span>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="ml-auto">
-                        {Math.random() > 0.3 ? 'Paid' : 'Pending'}
-                      </Badge>
+                  {recentActivity.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No recent activity
                     </div>
-                  ))}
+                  ) : (
+                    recentActivity.map((activity, i) => (
+                      <div key={activity.id} className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium">
+                            {activity.studentName} from {activity.chapterName}
+                          </p>
+                          <div className="flex text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 mr-1" /> 
+                            <span>{activity.timeAgo}</span>
+                          </div>
+                        </div>
+                        <Badge variant={activity.paymentStatus === 'completed' ? 'default' : 'outline'} className="ml-auto">
+                          {activity.paymentStatus === 'completed' ? 'Paid' : 'Pending'}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -272,8 +304,7 @@ export function AdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="charts" className="space-y-4">
+          <TabsContent value="charts" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Registration Analytics</CardTitle>
@@ -285,6 +316,48 @@ export function AdminDashboard() {
               <AdminChart />
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="imports" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <SqlImport />
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Import Instructions</CardTitle>
+                <CardDescription>How to prepare your SQL files for import</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Preparing SQL Files</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>Export data from your MySQL database as SQL</li>
+                    <li>Make sure each file contains data for one table only</li>
+                    <li>Files should contain INSERT statements</li>
+                    <li>Select the appropriate table type when uploading</li>
+                  </ul>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Table Mapping</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li><strong>Registrations</strong>: Student registration data</li>
+                    <li><strong>Chapters</strong>: Chapter information</li>
+                    <li><strong>Schools</strong>: School data</li>
+                    <li><strong>Centers</strong>: Examination centers</li>
+                    <li><strong>Coordinators</strong>: Chapter coordinator data</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 rounded-md p-3">
+                  <p className="text-sm">
+                    <strong>Note:</strong> Imports work best when tables are imported in the correct order: 
+                    Chapters → Schools/Centers → Coordinators → Registrations
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

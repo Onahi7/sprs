@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server"
 import { exportRegistrationsToCSV } from "@/lib/csv"
+import { getSession } from "@/lib/auth"
 
 export async function GET(request: Request) {
   try {
+    const session = await getSession()
+    
+    if (!session || session.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    
     const { searchParams } = new URL(request.url)
     const chapterId = searchParams.get("chapterId")
     const status = searchParams.get("status")
@@ -15,7 +22,7 @@ export async function GET(request: Request) {
     }
 
     if (status && status !== "all") {
-      filters.status = status
+      filters.status = status as "pending" | "completed"
     }
 
     // Export registrations with filters
@@ -28,7 +35,7 @@ export async function GET(request: Request) {
     // Set headers for CSV download
     const headers = new Headers()
     headers.set("Content-Type", "text/csv")
-    headers.set("Content-Disposition", `attachment; filename="all-registrations.csv"`)
+    headers.set("Content-Disposition", `attachment; filename="napps-all-registrations-${new Date().toISOString().split("T")[0]}.csv"`)
 
     return new NextResponse(result.csv, {
       status: 200,

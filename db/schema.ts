@@ -1,6 +1,16 @@
 import { pgTable, serial, text, timestamp, boolean, integer, decimal } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
+// Administrator model
+export const administrators = pgTable("administrators", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  email: text("email"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
 // Chapter model
 export const chapters = pgTable("chapters", {
   id: serial("id").primaryKey(),
@@ -62,6 +72,8 @@ export const chapterCoordinators = pgTable("chapter_coordinators", {
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: text("value"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // Define relations

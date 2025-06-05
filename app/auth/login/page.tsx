@@ -73,8 +73,10 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        console.error("Login failed:", data);
         setError(data.error || "Invalid credentials. Please try again.");
       } else {
+        console.log("Login successful, redirecting to admin page");
         router.push("/admin");
         router.refresh();
       }

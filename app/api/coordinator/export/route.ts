@@ -13,12 +13,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    const { searchParams } = new URL(request.url)
-    const chapterId = parseInt(searchParams.get("chapterId") || session.chapterId?.toString() || "0", 10)
+    const chapterId = session.chapterId
     
-    // Verify the coordinator has access to this chapter
-    if (session.chapterId !== chapterId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!chapterId) {
+      return NextResponse.json({ error: "No chapter assigned to coordinator" }, { status: 400 })
     }
     
     const db = getDbConnection()

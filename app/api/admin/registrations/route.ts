@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server"
-import { db } from "@/db"
-import { registrations } from "@/db/schema"
-import { eq, like, and, or, desc, type SQL, sql } from "drizzle-orm"
+import { getDbConnection } from "@/db/utils"
+import { getSession } from "@/lib/auth"
+import { registrations, chapters, schools, centers } from "@/db/schema"
+import { eq, ilike, and, or, count, desc } from "drizzle-orm"
 
 export async function GET(request: Request) {
+  const session = await getSession()
+  
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
@@ -13,30 +20,40 @@ export async function GET(request: Request) {
     const status = searchParams.get("status")
 
     const offset = (page - 1) * limit
+    const db = getDbConnection()
 
     // Build where conditions
-    const whereConditions: SQL[] = []
+    const whereConditions = []
 
     if (chapterId && chapterId !== "all") {
       whereConditions.push(eq(registrations.chapterId, Number.parseInt(chapterId)))
     }
 
     if (status && status !== "all") {
-      whereConditions.push(eq(registrations.paymentStatus, status))
+      whereConditions.push(eq(registrations.paymentStatus, status as "pending" | "completed"))
     }
 
     if (search) {
       whereConditions.push(
         or(
-          like(registrations.firstName, `%${search}%`),
-          like(registrations.lastName, `%${search}%`),
-          like(registrations.registrationNumber, `%${search}%`),
+          ilike(registrations.firstName, `%${search}%`),
+          ilike(registrations.lastName, `%${search}%`),
+          ilike(registrations.registrationNumber, `%${search}%`),
         ),
       )
     }
 
     // Get registrations with filters
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined
+
+    // Get total count for pagination
+    const totalResult = await db
+      .select({ count: count() })
+      .from(registrations)
+      .where(whereClause)
+    
+    const total = totalResult[0].count
+    const totalPages = Math.ceil(total / limit)
 
     const allRegistrations = await db.query.registrations.findMany({
       where: whereClause,
@@ -46,23 +63,32 @@ export async function GET(request: Request) {
       with: {
         chapter: true,
         school: true,
+        center: true,
       },
     })
 
-    // Get total count for pagination
-    const countQuery = db.select({ count: sql<number>`count(*)` }).from(registrations)
-    if (whereClause) {
-      countQuery.where(whereClause)
-    }
-    const totalCount = await countQuery
+    // Transform the data to match frontend expectations
+    const transformedRegistrations = allRegistrations.map(reg => ({
+      id: reg.id,
+      registrationNumber: reg.registrationNumber,
+      firstName: reg.firstName,
+      middleName: reg.middleName,
+      lastName: reg.lastName,
+      chapterId: reg.chapterId,
+      chapterName: reg.chapter?.name || 'Unknown Chapter',
+      schoolId: reg.schoolId,
+      schoolName: reg.school?.name || reg.schoolName || 'Unknown School',
+      paymentStatus: reg.paymentStatus,
+      createdAt: reg.createdAt,
+    }))
 
     return NextResponse.json({
-      registrations: allRegistrations,
+      registrations: transformedRegistrations,
       pagination: {
-        total: totalCount[0].count,
+        total,
         page,
         limit,
-        totalPages: Math.ceil(totalCount[0].count / limit),
+        totalPages,
       },
     })
   } catch (error) {

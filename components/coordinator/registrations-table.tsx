@@ -63,11 +63,11 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
 
   useEffect(() => {
     const fetchRegistrations = async () => {
-      if (!session?.user?.chapterId) return
+      if (!session?.user) return
 
       try {
         const response = await fetch(
-          `/api/coordinator/registrations?chapterId=${session.user.chapterId}&page=${pagination.page}&limit=${pagination.limit}&search=${searchQuery}`,
+          `/api/coordinator/registrations?page=${pagination.page}&limit=${pagination.limit}&search=${searchQuery}`,
         )
 
         if (!response.ok) throw new Error("Failed to fetch registrations")
@@ -82,7 +82,7 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
       }
     }
 
-    if (session?.user?.chapterId) {
+    if (session?.user) {
       fetchRegistrations()
     }
   }, [session, pagination.page, pagination.limit, searchQuery])
@@ -94,10 +94,8 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
   }
 
   const exportToCsv = async () => {
-    if (!session?.user?.chapterId) return
-
     try {
-      window.open(`/api/coordinator/export?chapterId=${session.user.chapterId}`, "_blank")
+      window.open(`/api/coordinator/export`, "_blank")
     } catch (error) {
       console.error("Error exporting to CSV:", error)
     }
@@ -105,6 +103,32 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
 
   const handlePrintSlip = (registrationNumber: string) => {
     window.open(`/api/registrations/${registrationNumber}/slip`, "_blank")
+  }
+
+  const handleDownloadSlip = async (registrationNumber: string, studentName: string) => {
+    try {
+      const response = await fetch(`/api/registrations/${registrationNumber}/slip`)
+      if (!response.ok) {
+        throw new Error(`Failed to download slip: ${response.statusText}`)
+      }
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      // Clean student name for filename
+      const cleanName = studentName.replace(/[^a-zA-Z0-9]/g, '_')
+      a.download = `${registrationNumber}_${cleanName}_Registration_Slip.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Error downloading slip:", error)
+      // Fallback to opening in new tab
+      window.open(`/api/registrations/${registrationNumber}/slip`, "_blank")
+    }
   }
 
   if (loading) {
@@ -232,14 +256,31 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     {registration.paymentStatus === "completed" && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handlePrintSlip(registration.registrationNumber)}
-                        title="Print Registration Slip"
-                      >
-                        <Printer className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => 
+                            handleDownloadSlip(
+                              registration.registrationNumber, 
+                              `${registration.firstName} ${registration.middleName || ''} ${registration.lastName}`.trim()
+                            )
+                          }
+                          title="Download Registration Slip"
+                          className="h-8 w-8"
+                        >
+                          <DownloadIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handlePrintSlip(registration.registrationNumber)}
+                          title="Print Registration Slip"
+                          className="h-8 w-8"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>

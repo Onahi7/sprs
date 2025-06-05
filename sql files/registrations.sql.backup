@@ -1,0 +1,126 @@
+-- PostgreSQL compatible import for registrations
+-- Converted from MySQL wp_sprs_registrations dump
+-- Auto-generated on: June 4, 2025
+
+-- Begin transaction for data integrity
+BEGIN;
+
+-- Insert registration data with conflict resolution
+INSERT INTO registrations (
+  id, 
+  registration_number, 
+  first_name, 
+  middle_name, 
+  last_name, 
+  chapter_id, 
+  school_id, 
+  center_id, 
+  parent_first_name, 
+  parent_last_name, 
+  parent_phone, 
+  parent_email, 
+  passport_url, 
+  payment_status, 
+  payment_reference, 
+  created_at, 
+  school_name,   parent_consent
+) VALUES
+(67, '000001UO', 'Habib', 'Hussaini', 'Abubakar', 76, 617, 191, 'Hussaini Ibrahim', 'Abubakar', '08067161773', 'abuhaussaini888@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ab2f6f69c9a.jpg', 'completed', '', '2025-02-11 11:07:27', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(68, '000002ES', 'Serena', 'Hector', 'Agada', 76, 617, 191, 'Hector', 'Agada', '07033025730', 'hectorphilomina@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ab351c577a6.jpg', 'completed', '', '2025-02-11 11:31:40', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(70, '000004OO', 'OLIVE', 'EBUBECHUKWU', 'CHUKWURAH', 71, 803, 240, 'Ifeanyi', 'Diali', '08110598565', 'ifyallen@yahoo.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ab956a15360.jpg', 'completed', '', '2025-02-11 18:22:34', 'OLIVE HEIGHT SCHOOL SHABU', TRUE),
+(71, '000005PT', 'Jasper', 'Jenom', 'Bubu', 76, 617, 191, 'Bubu', 'Jenom', '08065635550', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac58ce0da31.jpg', 'completed', '', '2025-02-12 08:16:14', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(72, '000006YW', 'Emmanuel', 'Aondohemba', 'Pev', 76, 617, 191, 'Onah', 'Felicia', '07064364975', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac5b36136bb.jpg', 'completed', '', '2025-02-12 08:26:30', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(73, '000007YR', 'Elizabeth', 'Nnansi', 'Akyala', 76, 617, 191, 'Ishaku', 'Akyala', '08132212979', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac5cc68fe40.jpg', 'completed', '', '2025-02-12 08:33:10', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(74, '000008XB', 'Emmanuel', 'Amindi', 'Iniodu', 76, 617, 191, 'Fumnanya', 'Onyeka Iniodu', '07037728771', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac5e304ccf4.jpg', 'completed', '', '2025-02-12 08:39:12', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(75, '000009HG', 'ROSEGOLD', 'SAMUEL', 'OWONTE', 76, 617, 191, 'EKANEM', 'ANDREW BROWN', '07030621218', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac603541228.jpg', 'completed', '', '2025-02-12 08:47:49', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(76, '000010WF', 'Hibatullah', 'Ochuwa', 'Abdulhakeem', 76, 617, 191, 'Usman', 'Abdulhakeem', '08027450983', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac61d03b7b3.jpg', 'completed', '', '2025-02-12 08:54:40', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(77, '000011VY', 'KHAIRAT', 'ABDULKERIM', 'DANESI', 76, 617, 191, 'DANESI', 'ABDULKERIM ALASA', '08038002108', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac66d657664.jpg', 'completed', '', '2025-02-12 09:16:06', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(80, '000014NM', 'Naqeeba', 'Othman', 'Adis', 76, 617, 191, 'Fatima', 'Adamude', '08036108103', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac75805e79f.jpg', 'completed', '', '2025-02-12 10:18:40', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(81, '000015FV', 'Jakim', 'Kuzayed', 'Madaki', 76, 617, 191, 'Barnabas', 'Madaki', '08034421899', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67ac7787d8ac1.jpg', 'completed', '', '2025-02-12 10:27:19', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(85, '000016CZ', 'Uko', '', 'Abawulor', 128, 688, 232, 'Uko', 'Abawulor', '08138516675', 'hardytechabuja@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b0bc674f7b8.jpeg', 'pending', '', '2025-02-15 16:10:15', 'MIFTAHUL ILMI', TRUE),
+(86, '000017LZ', 'Darlington', '', 'Stephen', 76, 617, 191, 'Stephen', 'Okechukwu', '08036301608', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b2f82c4ad34.jpg', 'completed', '', '2025-02-17 08:49:48', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(87, '000018YJ', 'Murad', 'Hud', 'Khalid', 76, 617, 191, 'Hud', 'Khalid Ubandomu', '08033200029', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b2f9e39973a.jpg', 'completed', '', '2025-02-17 08:57:07', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(88, '000019YT', 'Fatima', 'Abu', 'Muhammed', 76, 617, 191, 'Muhammad', 'Abu', '08131600666', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b2fb5d76f61.jpg', 'completed', '', '2025-02-17 09:03:25', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(89, '000020DH', 'Treasure', 'Fagbohun', 'Oluwashemilore', 76, 617, 191, 'Akinlabi', 'Fabgohun', '08038347830', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b2fc98066ae.jpg', 'completed', '', '2025-02-17 09:08:40', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(90, '000021QT', 'Anita', 'Oneshi', 'Agbo', 76, 617, 191, 'Agbo', 'Maaji', '08033117758', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b2fefb6240a.jpg', 'completed', '', '2025-02-17 09:18:51', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(91, '000022PR', 'Samuel', 'Daniel', 'Agyeno', 76, 617, 191, 'Daniel', 'Agyeno', '08066185536', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b3007a4db5a.jpg', 'completed', '', '2025-02-17 09:25:14', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(92, '000023AE', 'Joanna', 'Olachukwu', 'Chukwuamaka', 76, 617, 191, 'Joy', 'Ikechukwu Nwiyi', '08035466400', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b30229446e8.jpg', 'completed', '', '2025-02-17 09:32:25', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(93, '000024VF', 'David', '', 'Emmanuel', 76, 617, 191, 'Terna', 'Juliet Emmanuel', '08036799946', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b5836349670.jpg', 'completed', '', '2025-02-19 07:08:19', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(94, '000025BC', 'Fadila', '', 'Balarabe', 76, 617, 191, 'Balarabe', 'Mohammed Ashiru', '08034426542', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b586c43fa3a.jpg', 'completed', '', '2025-02-19 07:22:44', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(95, '000026VD', 'Fadeel', '', 'Balarabe', 76, 617, 191, 'Balarabe', 'Mohammed Ashiru', '08034426542', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b587ace4e63.jpg', 'pending', '', '2025-02-19 07:26:36', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(96, '000027RU', 'Fadeel', '', 'Balarabe', 76, 617, 191, 'Balarabe', 'Mohammed Ashiru', '08034426542', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b5890c237ca.jpg', 'completed', '', '2025-02-19 07:32:28', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(97, '000028OU', 'Faith', 'Godiya', 'Amos', 76, 617, 191, 'Godiya', 'Amos', '08036268817', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b58a148b94b.jpg', 'completed', '', '2025-02-19 07:36:52', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(98, '000029GC', 'Rachael', 'Kelvin', 'Omezia', 76, 617, 191, 'Rita', 'Okeme', '07050365075', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b58c4edaf3f.jpg', 'completed', '', '2025-02-19 07:46:22', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(99, '000030FK', 'Anas', 'Yusuf', 'Omaaki', 76, 617, 191, 'Yusuf', 'Musa Omaaki', '08038712562', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b58d9a8e539.jpg', 'completed', '', '2025-02-19 07:51:54', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(100, '000031HD', 'Emmanuella', 'Owusonabi', 'Agyo', 76, 617, 191, 'Tsamaila', 'Agyo', '08065695444', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b58f108dda4.jpg', 'completed', '', '2025-02-19 07:58:08', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(101, '000032OL', 'GOSPEL', '', 'MICAH', 71, 808, 238, 'IBRAHIM', 'MICAH', '08036848909', 'jaycrest119@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b5a4acb64e6.jpg', 'completed', '', '2025-02-19 09:30:20', 'JAYCREST GROUP OF SCHOOLS', TRUE),
+(102, '000033FZ', 'Saphire', 'Chubyojo', 'Nathaniel', 76, 617, 191, 'Nathaniel Ugbede', 'Odoma', '08067709907', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67b6d8c467f2b.jpg', 'completed', '', '2025-02-20 07:24:52', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(103, '000034AL', 'Christabel', 'Kosis', 'Ezenwuba', 76, 617, 191, 'Charity', 'Ngozi Ezenwuba', '08038194519', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67caa1c3829e6.jpg', 'completed', '', '2025-03-07 07:35:31', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(104, '000035ZU', 'Michelle', 'Arinze', 'Omasirichuckwu', 76, 617, 191, 'Arinze', 'Bukola Esther', '08034531990', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67caa2f61654f.jpg', 'completed', '', '2025-03-07 07:40:38', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(105, '000036II', 'Micah', 'Yohanna', 'Fartabi', 76, 617, 191, 'Micah', 'Yohanna', '07031827694', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67caa477b7bb8.jpg', 'completed', '', '2025-03-07 07:47:03', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(106, '000037RS', 'Salamatu', 'Khalid', 'Musa', 76, 617, 191, 'Khalid', 'Musa', '08065310973', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67d18593842c6.jpg', 'completed', '', '2025-03-12 13:01:07', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(107, '000038DH', 'Abass', 'Uko', 'Hardy', 76, 552, 194, 'Dickson', 'Hardy', '07038343789', 'carefamsl@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67d96a5003906.jpg', 'pending', '', '2025-03-18 12:42:56', 'BLESSED DAY STARS INTL ACAD', TRUE),
+(108, '000039UO', 'Uko', 'Abawulor', 'Dickson', 91, 349, 179, 'Uko', 'Dickson', '07038343778', 'dicksonhardy7@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67dbb39d606fe.jpg', 'pending', '', '2025-03-20 06:20:13', 'AL-YUSRA ACADEMY', TRUE),
+(109, '000040XE', 'Uko', 'Abawulor', 'Dickson', 91, 350, 173, 'Uko', 'Dickson', '08109798304', 'dicksonhardy7@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/67dbb4a4c2313.jpg', 'pending', '', '2025-03-20 06:24:36', 'AMAZING GRACE BAPTIST ACADEMY', TRUE),
+(110, '000041QQ', 'DAVID', 'ADLIDZI', 'ABRAHAM', 71, 798, 241, 'ABRAHAMA', 'ADLIDZI', '08021281778', 'shabuelite@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b1254e7fed.jpg', 'completed', '', '2025-05-07 07:57:08', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(111, '000042NE', 'DAHIRU', 'SANI', 'MUHAMMAD', 71, 798, 241, 'MUHAMMAD', 'SANI', '08037396531', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b27c0c3cac.jpg', 'completed', '', '2025-05-07 09:28:32', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(112, '000043GZ', 'SAFIYA', 'INDEGE', 'SHUAIBU', 71, 798, 241, 'SHUAIBU', 'MOHAMMED', '07082271401', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b2ab5d8a7c.jpg', 'completed', '', '2025-05-07 09:41:09', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(113, '000044NA', 'SAFIYA', 'ABUBAKAR', 'ATTAH', 71, 798, 241, 'ABUBAKAR', 'ATTAH', '08023615458', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b2ef84f457.jpg', 'completed', '', '2025-05-07 09:59:20', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(114, '000045PQ', 'ABDULJALIL', 'Sani', 'Zakari', 71, 798, 241, 'Zakari', 'Sani', '08068267736', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b40828d3e3.jpg', 'completed', '', '2025-05-07 11:14:10', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(115, '000046LE', 'Umar', 'Omiya', 'Abdullahi', 71, 798, 241, 'Abdullahi', 'Omiya', '08037658136', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b42ef3b681.jpg', 'completed', '', '2025-05-07 11:24:31', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(116, '000047JQ', 'Hasiya', 'Daddau', 'Mohammed', 71, 798, 241, 'Mohammed', 'Daddau', '07032467024', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b46aeb3e92.jpg', 'pending', '', '2025-05-07 11:40:30', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(117, '000048ZF', 'Hasiya', 'Daddau', 'Mohammed', 71, 798, 241, 'Mohammed', 'Daddau', '07032467024', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b472f35628.jpg', 'pending', '', '2025-05-07 11:42:39', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(118, '000049FI', 'Hasiya', 'Daddau', 'Mohammed', 71, 798, 241, 'Mohammed', 'Daddau', '07032467024', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b7b2e063bb.jpg', 'pending', '', '2025-05-07 15:24:30', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(119, '000050ZX', 'Hasiya', 'Daddau', 'Mohammed', 71, 798, 241, 'Mohammed', 'Daddau', '07032467024', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b7b83db5a7.jpg', 'completed', '', '2025-05-07 15:25:55', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(120, '000051AC', 'Saratu', 'Ibrahim', 'Usman', 71, 798, 241, 'Usman', 'Ibrahim', '08060479669', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b8c05440fd.jpg', 'pending', '', '2025-05-07 16:36:21', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(121, '000052EP', 'Saratu', 'Ibrahim', 'Usman', 71, 798, 241, 'Usman', 'Ibrahim', '08060479669', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681b8c4ede1f0.jpg', 'completed', '', '2025-05-07 16:37:34', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(122, '000053UB', 'Hannatu', 'Kabir', 'Muhammad', 71, 798, 241, 'Muhammad', 'Kabir', '08069228216', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681c94485cff0.jpg', 'completed', '', '2025-05-08 11:23:52', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(123, '000054KD', 'Umar', '', 'Ibrahim', 71, 798, 241, 'Ibrahim', 'Umar', '09014017474', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681c95916408b.jpg', 'completed', '', '2025-05-08 11:29:21', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(124, '000055ON', 'Asuma', '', 'Judith', 71, 798, 241, 'Asuma', 'Iwange', '08171958633', 'sankinkiloschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681c96ca2770c.jpg', 'completed', '', '2025-05-08 11:34:34', 'SAN-KINKO SCHOOL SHABU', TRUE),
+(125, '000056IU', 'ABDULMUTALLIB', 'SHAMMAH', 'MUSA', 71, 826, 241, 'MUSA', 'SHAMMAH', '07068673463', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681cd8aae313a.jpg', 'completed', '', '2025-05-08 16:15:38', 'AL-AMIN SCHOOL SHABU', TRUE),
+(126, '000057WG', 'SHUAIBU', '', 'DAHIRU', 71, 826, 241, 'ZAINAB', 'JAFARU', '07054152896', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681cdb18436e8.jpg', 'completed', '', '2025-05-08 16:26:00', 'AL-AMIN SCHOOL SHABU', TRUE),
+(127, '000058PK', 'ABUBAKAR', 'USMAN', 'MUHAMMAD', 71, 826, 241, 'USMAN', 'MUHAMMAD', '09068865853', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681cdc6536d36.jpg', 'completed', '', '2025-05-08 16:31:33', 'AL-AMIN SCHOOL SHABU', TRUE),
+(128, '000059KA', 'YAKUBU', '', 'USMAN', 71, 826, 241, 'BILKISU', 'USMAN', '09053236220', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681cdd80627a2.jpg', 'completed', '', '2025-05-08 16:36:16', 'AL-AMIN SCHOOL SHABU', TRUE),
+(129, '000060GQ', 'MUNIRAT', 'OGAH', 'TANIMU', 71, 826, 241, 'TANIMU', 'DOGARA OGAH', '08064471146', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681ce7b6c6c9f.jpg', 'completed', '', '2025-05-08 17:19:50', 'AL-AMIN SCHOOL SHABU', TRUE),
+(130, '000061EA', 'MAIMUNA', 'OGAH', 'TANIMU', 71, 826, 241, 'TANIMU', 'DOGARA OGAH', '08064471146', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681ce9ba24014.jpg', 'pending', '', '2025-05-08 17:28:26', 'AL-AMIN SCHOOL SHABU', TRUE),
+(131, '000062UV', 'MAIMUNA', 'OGAH', 'TANIMU', 71, 826, 241, 'TANIMU', 'DOGARA OGAH', '08064471146', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/681cea65c0aa3.jpg', 'completed', '', '2025-05-08 17:31:17', 'AL-AMIN SCHOOL SHABU', TRUE),
+(132, '000063VF', 'Khyrullah', 'Idris', 'Apa', 76, 617, 191, 'Idris', 'Danladi Apa', '08036947054', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/6823063767bff.jpg', 'completed', '', '2025-05-13 08:43:35', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(133, '000064KO', 'Yakubu', 'Muhammad', 'Kaura', 76, 617, 191, 'Muhammad', 'Abubakar Kaura', '08032164038', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/682307b024c9a.jpg', 'completed', '', '2025-05-13 08:49:52', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(134, '000065ZT', 'Divine', 'Treasure', 'Joseph', 76, 617, 191, 'Chibuzor', 'Nnaji', '07031276105', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/6823095bf231c.jpg', 'completed', '', '2025-05-13 08:56:59', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(135, '000066VF', 'Mercy', 'Akpagher', 'Ngohide', 76, 617, 191, 'Akpagher', 'Paul Toryila', '09160748134', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/68230c02c5c33.jpg', 'completed', '', '2025-05-13 09:08:18', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(136, '000067SF', 'Uko', 'Abawulor', 'Dickson', 115, 132, 158, 'Uko', 'Dickson', '07038343700', 'dicksonhardy07@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/682364672c1c4.png', 'pending', '', '2025-05-13 15:25:27', 'DIVINE GRACE ACADEMY AKUNZA', TRUE),
+(137, '000068KY', 'PENIEL', 'AYIEKNEHOGBREN', 'AKPA', 71, 803, 240, 'NOAH', 'AKPA', '08065470772', 'oliveheightsschool@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/6824ff84362a8.jpg', 'completed', '', '2025-05-14 20:39:32', 'OLIVE HEIGHT SCHOOL SHABU', TRUE),
+(138, '000069AU', 'Jesse', 'Paul', 'Kwapriem', 76, 617, 191, 'Paul', 'Albert', '08069651319', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/682583e95a4d6.jpg', 'completed', '', '2025-05-15 06:04:25', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(139, '000070ZQ', 'Favour', 'Maxwell', 'Amarachi', 76, 617, 191, 'Nnona', 'Maxwell', '08034912837', 'yitss.younikacademy@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/682586d1758c5.jpg', 'completed', '', '2025-05-15 06:16:49', 'YOU-NIK ACADEMY NUR/PRI SCHOOL', TRUE),
+(140, '000071QH', 'IBRAHIM', 'GIZA', 'USMAN', 71, 826, 241, 'USMAN', 'GIZA', '08036365386', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/6825c04199cea.jpg', 'completed', '', '2025-05-15 10:21:53', 'AL-AMIN SCHOOL SHABU', TRUE),
+(141, '000072OZ', 'MARYAM', '', 'IDRIS', 71, 826, 241, 'IDRIS', 'SHABU', '08069038601', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/6825cff926126.jpg', 'completed', '', '2025-05-15 11:28:57', 'AL-AMIN SCHOOL SHABU', TRUE),
+(142, '000073RG', 'RABI', 'ALIYU', 'YAHUZA', 71, 826, 241, 'ALIYU', 'YAHUZA', '08037662430', 'alaminschoolshabu@gmail.com', 'https://nappsnasarawa.com/wp-content/uploads/sprs-passports/6825d2d5f0b58.jpg', 'completed', '', '2025-05-15 11:41:09', 'AL-AMIN SCHOOL SHABU', TRUE);
+ON CONFLICT (id) DO UPDATE SET
+  registration_number = EXCLUDED.registration_number,
+  first_name = EXCLUDED.first_name,
+  middle_name = EXCLUDED.middle_name,
+  last_name = EXCLUDED.last_name,
+  chapter_id = EXCLUDED.chapter_id,
+  school_id = EXCLUDED.school_id,
+  center_id = EXCLUDED.center_id,
+  parent_first_name = EXCLUDED.parent_first_name,
+  parent_last_name = EXCLUDED.parent_last_name,
+  parent_phone = EXCLUDED.parent_phone,
+  parent_email = EXCLUDED.parent_email,
+  passport_url = EXCLUDED.passport_url,
+  payment_status = EXCLUDED.payment_status,
+  payment_reference = EXCLUDED.payment_reference,
+  created_at = EXCLUDED.created_at,
+  school_name = EXCLUDED.school_name,
+  parent_consent = EXCLUDED.parent_consent;
+
+-- Update the sequence to the correct next value
+SELECT setval('registrations_id_seq', 142, false);
+
+-- Commit the transaction
+COMMIT;
+
+-- Display import summary
+\echo 'Registrations data import completed successfully!'
+\echo 'Total records processed: 76'
+\echo 'Sequence updated to: 142'

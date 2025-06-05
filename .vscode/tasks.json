@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Import SQL Data",
+			"type": "shell",
+			"command": "npx ts-node scripts/import-sql-files.ts",
+			"args": [
+				"${input:sqlFolderPath}"
+			],
+			"group": "build",
+			"problemMatcher": [],
+			"isBackground": false
+		}
+	]
+}

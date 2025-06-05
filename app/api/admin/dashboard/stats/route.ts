@@ -5,13 +5,18 @@ import { registrations, chapters, schools, centers } from "@/db/schema"
 import { count, sql, eq } from "drizzle-orm"
 
 export async function GET() {
+  console.log("Dashboard stats API: Request received")
   try {
+    console.log("Dashboard stats API: Getting session")
     const session = await getSession()
+    console.log("Dashboard stats API: Session result:", JSON.stringify(session))
     
     if (!session || session.role !== "admin") {
+      console.log("Dashboard stats API: Unauthorized - no valid admin session")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
+    console.log("Dashboard stats API: Getting database connection")
     const db = getDbConnection()
     
     // Get total registrations

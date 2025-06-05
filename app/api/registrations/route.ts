@@ -1,13 +1,12 @@
 // filepath: c:\Users\HP\Downloads\sprs\app\api\registrations\route.ts
 import { NextResponse } from "next/server"
 import { registrations, chapters, schools, centers } from "@/db/schema"
-import { eq, desc } from "drizzle-orm"
+import { eq, desc, and } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { sendRegistrationConfirmationEmail, sendCoordinatorNotificationEmail } from "@/lib/email"
 import { getDbConnection } from "@/db/utils"
 
-export async function POST(request: Request) {
-  try {
+export async function POST(request: Request) {  try {
     const data = await request.json()
     const db = getDbConnection();
 
@@ -16,7 +15,6 @@ export async function POST(request: Request) {
       "firstName",
       "lastName",
       "chapterId",
-      "schoolId",
       "centerId",
       "parentFirstName",
       "parentLastName",
@@ -30,10 +28,48 @@ export async function POST(request: Request) {
       if (!data[field]) {
         return NextResponse.json({ error: `${field} is required` }, { status: 400 })
       }
+    }    // Validate that either schoolId or schoolName is provided
+    if (!data.schoolId && !data.schoolName) {
+      return NextResponse.json({ error: "Either schoolId or schoolName is required" }, { status: 400 })
     }
 
     // Generate registration number - Format: NAPPS-XXXXXXYY (X=timestamp digits, Y=random letters)
     const registrationNumber = `NAPPS-${Date.now().toString().slice(-6)}${nanoid(2).toUpperCase()}`
+
+    // Handle school resolution and auto-creation
+    let schoolId = data.schoolId
+    let schoolName = data.schoolName
+
+    if (data.schoolId && !schoolName) {
+      // Case 1: schoolId provided, get school name from database
+      const school = await db.query.schools.findFirst({
+        where: eq(schools.id, data.schoolId),
+      })
+      schoolName = school?.name || null
+    } else if (!data.schoolId && schoolName) {
+      // Case 2: schoolName provided manually, check if school already exists for this chapter
+      const existingSchool = await db.query.schools.findFirst({
+        where: and(
+          eq(schools.chapterId, data.chapterId),
+          eq(schools.name, schoolName.trim())
+        ),
+      })
+
+      if (existingSchool) {
+        // School already exists, use it
+        schoolId = existingSchool.id
+      } else {
+        // School doesn't exist, create it
+        const newSchoolResult = await db.insert(schools).values({
+          chapterId: data.chapterId,
+          name: schoolName.trim(),
+          createdAt: new Date(),
+        }).returning()
+        
+        schoolId = newSchoolResult[0].id
+        console.log(`✅ Auto-created school "${schoolName}" for chapter ${data.chapterId}`)
+      }
+    }
 
     // Insert registration
     const result = await db.insert(registrations).values({
@@ -42,8 +78,8 @@ export async function POST(request: Request) {
       middleName: data.middleName || null,
       lastName: data.lastName,
       chapterId: data.chapterId,
-      schoolId: data.schoolId,
-      schoolName: data.schoolName || null,
+      schoolId: schoolId,
+      schoolName: schoolName,
       centerId: data.centerId,
       parentFirstName: data.parentFirstName,
       parentLastName: data.parentLastName,
@@ -55,15 +91,9 @@ export async function POST(request: Request) {
       createdAt: new Date(),
     }).returning();
 
-    const newRegistration = result[0];
-
-    // Get chapter, school, and center details for email
+    const newRegistration = result[0];    // Get chapter, school, and center details for email
     const chapter = await db.query.chapters.findFirst({
       where: eq(chapters.id, data.chapterId),
-    })
-
-    const school = await db.query.schools.findFirst({
-      where: eq(schools.id, data.schoolId),
     })
 
     const center = await db.query.centers.findFirst({
@@ -77,7 +107,7 @@ export async function POST(request: Request) {
         name: `${data.firstName} ${data.lastName}`,
         registrationNumber,
         chapter: chapter?.name || `Chapter ID: ${data.chapterId}`,
-        school: data.schoolName || school?.name || `School ID: ${data.schoolId}`,
+        school: schoolName || `School ID: ${data.schoolId}`,
         center: center?.name || `Center ID: ${data.centerId}`,
       })
     } catch (emailError) {
