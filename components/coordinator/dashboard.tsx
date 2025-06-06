@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { RegistrationStats } from "./registration-stats"
 import { RegistrationChart } from "./registration-chart"
 import { RegistrationsTable } from "./registrations-table"
+import { SplitTransactions } from "./split-transactions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -18,7 +19,8 @@ import {
   ListFilter, 
   TrendingUp, 
   User,
-  AlertCircle 
+  AlertCircle,
+  CreditCard
 } from "lucide-react"
 
 export function CoordinatorDashboard() {
@@ -181,9 +183,8 @@ export function CoordinatorDashboard() {
         totalSchools={stats?.totalSchools}
         totalCenters={stats?.totalCenters}
       />
-      
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-3 md:w-auto w-full">
+        <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid grid-cols-4 md:w-auto w-full">
           <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
@@ -191,6 +192,10 @@ export function CoordinatorDashboard() {
           <TabsTrigger value="registrations" onClick={() => setActiveTab("registrations")}>
             <ListFilter className="h-4 w-4 mr-2" />
             Registrations
+          </TabsTrigger>
+          <TabsTrigger value="split-payments" onClick={() => setActiveTab("split-payments")}>
+            <CreditCard className="h-4 w-4 mr-2" />
+            Split Payments
           </TabsTrigger>
           <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")}>
             <TrendingUp className="h-4 w-4 mr-2" />
@@ -243,8 +248,7 @@ export function CoordinatorDashboard() {
             </Card>
           </div>
         </TabsContent>
-        
-        <TabsContent value="registrations" className="space-y-4">
+          <TabsContent value="registrations" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>All Registrations</CardTitle>
@@ -255,6 +259,10 @@ export function CoordinatorDashboard() {
               <RegistrationsTable chapterId={chapterId || 0} />
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="split-payments" className="space-y-4">
+          <SplitTransactions chapterId={chapterId || 0} />
         </TabsContent>
         
         <TabsContent value="analytics" className="space-y-4">

@@ -10,7 +10,11 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "NAPPS Nasarawa State Unified Exams",
   description: "NAPPS Nasarawa State Unified Examination System",
-    generator: 'v0dev'
+  generator: 'v0dev',
+  icons: {
+    icon: '/napps-logo.svg',
+    shortcut: '/napps-logo.svg',
+  },
 }
 
 export default function RootLayout({

@@ -13,12 +13,14 @@ export async function initializePayment({
   reference,
   callbackUrl,
   metadata,
+  splitCode,
 }: {
   email: string
   amount: number
   reference: string
   callbackUrl: string
   metadata?: Record<string, any>
+  splitCode?: string
 }) {
   try {
     // Validate that the Paystack key is configured
@@ -29,19 +31,26 @@ export async function initializePayment({
     // Convert amount to kobo (smallest currency unit in Nigeria)
     const amountInKobo = Math.round(amount * 100)
 
+    const payload: any = {
+      email,
+      amount: amountInKobo,
+      reference,
+      callback_url: callbackUrl,
+      metadata,
+    }
+
+    // Add split code if provided
+    if (splitCode) {
+      payload.split_code = splitCode
+    }
+
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        email,
-        amount: amountInKobo,
-        reference,
-        callback_url: callbackUrl,
-        metadata,
-      }),
+      body: JSON.stringify(payload),
     })
 
     // Check for network or server errors

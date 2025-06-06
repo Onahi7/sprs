@@ -277,8 +277,7 @@ export function RegistrationsManagement() {
                         <TableRow key={registration.id}>
                           <TableCell>{registration.candidateName}</TableCell>
                           <TableCell>{registration.schoolName}</TableCell>
-                          <TableCell>{registration.centerName}</TableCell>
-                          <TableCell>
+                          <TableCell>{registration.centerName}</TableCell>                          <TableCell>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               registration.status === "approved" 
                                 ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" 
@@ -286,7 +285,7 @@ export function RegistrationsManagement() {
                                 ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100" 
                                 : "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100"
                             }`}>
-                              {registration.status.charAt(0).toUpperCase() + registration.status.slice(1)}
+                              {registration.status ? registration.status.charAt(0).toUpperCase() + registration.status.slice(1) : "Unknown"}
                             </span>
                           </TableCell>
                           <TableCell>
@@ -297,7 +296,7 @@ export function RegistrationsManagement() {
                                 ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100" 
                                 : "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100"
                             }`}>
-                              {registration.paymentStatus.charAt(0).toUpperCase() + registration.paymentStatus.slice(1)}
+                              {registration.paymentStatus ? registration.paymentStatus.charAt(0).toUpperCase() + registration.paymentStatus.slice(1) : "Unknown"}
                             </span>
                           </TableCell>
                           <TableCell>{format(new Date(registration.createdAt), 'PP')}</TableCell>
@@ -308,13 +307,11 @@ export function RegistrationsManagement() {
                   </TableBody>
                 </Table>
               </div>
-              
-              <div className="mt-4">
+                <div className="mt-4">
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious 
-                        href="#" 
                         onClick={(e) => { 
                           e.preventDefault();
                           if (page > 1) setPage(page - 1);
@@ -331,7 +328,6 @@ export function RegistrationsManagement() {
                       ) : (
                         <PaginationItem key={item}>
                           <PaginationLink 
-                            href="#" 
                             onClick={(e) => { 
                               e.preventDefault();
                               setPage(item as number);
@@ -346,7 +342,6 @@ export function RegistrationsManagement() {
                     
                     <PaginationItem>
                       <PaginationNext 
-                        href="#" 
                         onClick={(e) => { 
                           e.preventDefault();
                           if (page < totalPages) setPage(page + 1);

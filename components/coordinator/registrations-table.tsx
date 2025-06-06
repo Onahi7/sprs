@@ -2,8 +2,6 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import type { UserSession } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -45,12 +43,7 @@ interface RegistrationsTableProps {
   chapterId: number
 }
 
-interface Session {
-  user: UserSession | null
-}
-
 export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
-  const { data: session } = useSession() as { data: Session | null }
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -63,11 +56,11 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
 
   useEffect(() => {
     const fetchRegistrations = async () => {
-      if (!session?.user) return
+      if (!chapterId) return
 
       try {
         const response = await fetch(
-          `/api/coordinator/registrations?page=${pagination.page}&limit=${pagination.limit}&search=${searchQuery}`,
+          `/api/coordinator/registrations?chapterId=${chapterId}&page=${pagination.page}&limit=${pagination.limit}&search=${searchQuery}`,
         )
 
         if (!response.ok) throw new Error("Failed to fetch registrations")
@@ -82,10 +75,10 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
       }
     }
 
-    if (session?.user) {
+    if (chapterId) {
       fetchRegistrations()
     }
-  }, [session, pagination.page, pagination.limit, searchQuery])
+  }, [chapterId, pagination.page, pagination.limit, searchQuery])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,7 +88,7 @@ export function RegistrationsTable({ chapterId }: RegistrationsTableProps) {
 
   const exportToCsv = async () => {
     try {
-      window.open(`/api/coordinator/export`, "_blank")
+      window.open(`/api/coordinator/export?chapterId=${chapterId}`, "_blank")
     } catch (error) {
       console.error("Error exporting to CSV:", error)
     }

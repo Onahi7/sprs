@@ -17,7 +17,8 @@ export async function GET(request: Request) {
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const search = searchParams.get("search") || ""
     
-    const chapterId = session.chapterId
+    // Use chapterId from session or from query params (for compatibility)
+    const chapterId = session.chapterId || Number.parseInt(searchParams.get("chapterId") || "0")
     
     if (!chapterId) {
       return NextResponse.json({ error: "No chapter assigned to coordinator" }, { status: 400 })

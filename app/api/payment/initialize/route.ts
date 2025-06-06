@@ -46,7 +46,8 @@ export async function POST(request: Request) {
       email: registration.parentEmail,
       amount,
       reference,
-      callbackUrl
+      callbackUrl,
+      splitCode: registration.chapter?.splitCode
     });
 
     const paymentResult = await initializePayment({
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
       amount: amount,
       reference,
       callbackUrl,
+      splitCode: registration.chapter?.splitCode || undefined,
       metadata: {
         registrationId: registration.id,
         registrationNumber: registration.registrationNumber,
