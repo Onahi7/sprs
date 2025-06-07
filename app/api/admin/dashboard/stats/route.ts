@@ -20,46 +20,54 @@ export async function GET() {
     const db = getDbConnection()
     
     // Get total registrations
-    const totalRegistrationsResult = await db.select({ count: count() }).from(registrations)
+    // Fallback to raw SQL to ensure correct count
+    const totalRegistrationsSql = await db.execute(sql`
+      SELECT COUNT(*)::int AS count FROM ${registrations}
+    `)
+    const totalRegistrations = totalRegistrationsSql.rows[0]?.count || 0
 
-    // Get pending payments
+    // Get pending registration payments
     const pendingPaymentsResult = await db
       .select({ count: count() })
       .from(registrations)
       .where(eq(registrations.paymentStatus, "pending"))
-      
-    // Get completed payments
+    const pendingPayments = Number(pendingPaymentsResult[0].count) || 0
+
+    // Get completed registration payments
     const completedPaymentsResult = await db
       .select({ count: count() })
       .from(registrations)
       .where(eq(registrations.paymentStatus, "completed"))
+    const confirmedRegistrations = Number(completedPaymentsResult[0].count) || 0
 
     // Get total chapters
     const totalChaptersResult = await db.select({ count: count() }).from(chapters)
+    const totalChapters = Number(totalChaptersResult[0].count) || 0
 
     // Get total schools
     const totalSchoolsResult = await db.select({ count: count() }).from(schools)
+    const totalSchools = Number(totalSchoolsResult[0].count) || 0
 
     // Get total centers
     const totalCentersResult = await db.select({ count: count() }).from(centers)
+    const totalCenters = Number(totalCentersResult[0].count) || 0
 
-    // Get total revenue
-    const totalRevenueResult = await db.execute(sql`
-      SELECT SUM(c.exam_fee) as total_revenue
+    // Get total revenue from completed exam registrations
+    const revenueResult = await db.execute(sql`
+      SELECT SUM(c.amount) AS total_revenue
       FROM ${registrations} r
       JOIN ${chapters} c ON r.chapter_id = c.id
       WHERE r.payment_status = 'completed'
     `)
-
-    const totalRevenue = totalRevenueResult.rows[0]?.total_revenue || 0
+    const totalRevenue = revenueResult.rows[0]?.total_revenue || 0
 
     return NextResponse.json({
-      totalRegistrations: totalRegistrationsResult[0].count,
-      pendingPayments: pendingPaymentsResult[0].count,
-      confirmedRegistrations: completedPaymentsResult[0].count,
-      totalChapters: totalChaptersResult[0].count,
-      totalSchools: totalSchoolsResult[0].count,
-      totalCenters: totalCentersResult[0].count,
+      totalRegistrations,
+      pendingPayments,
+      confirmedRegistrations,
+      totalChapters,
+      totalSchools,
+      totalCenters,
       totalRevenue: Number(totalRevenue),
     })
   } catch (error) {
