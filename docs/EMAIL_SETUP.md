@@ -1,6 +1,6 @@
 # Email Setup Guide
 
-This guide will help you set up SMTP email functionality for the Student Project Registration System (SPRS).
+This guide will help you set up email functionality for the Student Project Registration System (SPRS).
 
 ## 📧 Overview
 
@@ -8,8 +8,43 @@ The system sends automated emails for:
 - Registration confirmations
 - Payment confirmations  
 - Coordinator notifications
+- Slot purchase confirmations
 
-## 🔧 Configuration
+## 🎯 Recommended: Resend (Current Implementation)
+
+We now use Resend for reliable email delivery with React email templates.
+
+### Setup Steps
+
+1. **Create a Resend Account**
+   - Visit https://resend.com and sign up
+   - Verify your email address
+
+2. **Get API Key**
+   - Go to https://resend.com/api-keys
+   - Click "Create API Key"
+   - Give it a name like "NAPPS SPRS"
+   - Copy the API key (starts with `re_`)
+
+3. **Add to Environment Variables**
+   ```env
+   # Resend (for email notifications)
+   RESEND_API_KEY=re_your_api_key_here
+   ```
+
+4. **Verify Domain (Optional but Recommended)**
+   - Go to https://resend.com/domains
+   - Add your domain (e.g., napps.org.ng)
+   - Follow DNS setup instructions
+   - Update the "from" email in `lib/email-resend.ts`
+
+### Testing
+Run the test script to verify your setup:
+```bash
+npx ts-node scripts/test-email-resend.ts
+```
+
+## 🔧 Legacy SMTP Configuration (Alternative)
 
 ### Environment Variables
 
@@ -24,8 +59,6 @@ EMAIL_SERVER_USER="your-email@gmail.com"
 EMAIL_SERVER_PASSWORD="your-app-password"
 EMAIL_FROM="NAPPS SPRS <your-email@gmail.com>"
 ```
-
-## 📨 Provider Setup
 
 ### Gmail (Recommended)
 

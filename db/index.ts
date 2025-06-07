@@ -38,3 +38,6 @@ export function getDbConnection() {
 }
 
 export { db }
+
+// Export coordinator slots utilities
+export * from './coordinator-slots-utils'

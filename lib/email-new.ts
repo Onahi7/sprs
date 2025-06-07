@@ -203,3 +203,63 @@ export async function sendCoordinatorNotificationEmail(data: {
     }
   }
 }
+
+export async function sendSlotPurchaseConfirmationEmail(data: {
+  to: string
+  coordinatorName: string
+  chapterName: string
+  packageName: string
+  slotsPurchased: number
+  amountPaid: number | string
+  paymentReference: string
+  transactionDate: string
+  availableSlots: number
+  totalSlots: number
+}) {
+  const mailer = getTransporter()
+  if (!mailer) {
+    console.error("Email transporter not available")
+    return {
+      success: false,
+      error: "Email service not configured",
+    }
+  }
+
+  try {
+    // Import the slot purchase confirmation email template
+    const { default: SlotPurchaseConfirmationEmail } = await import("../emails/slot-purchase-confirmation")
+    
+    const emailHtml = await render(
+      SlotPurchaseConfirmationEmail({
+        coordinatorName: data.coordinatorName,
+        coordinatorEmail: data.to,
+        chapterName: data.chapterName,
+        packageName: data.packageName,
+        slotsPurchased: data.slotsPurchased,
+        amountPaid: `₦${data.amountPaid.toLocaleString()}`,
+        paymentReference: data.paymentReference,
+        transactionDate: data.transactionDate,
+        currentSlotBalance: data.availableSlots,
+      }),
+    )
+
+    const result = await mailer.sendMail({
+      from: process.env.EMAIL_FROM || `"SPRS - Slot Purchase" <${emailConfig.auth.user}>`,
+      to: data.to,
+      subject: `🎉 Slot Purchase Confirmed - ${data.slotsPurchased} slots added to your account`,
+      html: emailHtml,
+    })
+
+    console.log("✅ Slot purchase confirmation email sent:", result.messageId)
+    return {
+      success: true,
+      messageId: result.messageId,
+    }
+  } catch (error) {
+    console.error("❌ Slot purchase email sending error:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unknown error occurred",
+    }
+  }
+}

@@ -9,35 +9,59 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { useToast } from "@/components/ui/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Download, Search, Calendar, Filter } from "lucide-react"
+import { Download, Search, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 
 // Define types
 type Registration = {
   id: number
-  candidateName: string
-  schoolName: string
-  centerName: string
-  status: string
+  registrationNumber: string
+  firstName: string
+  lastName: string
+  chapterId: number
+  schoolId?: number
+  schoolName?: string
+  centerId: number
+  paymentStatus: "pending" | "completed"
+  coordinatorRegisteredBy?: number
+  registrationType: "public" | "coordinator"
   createdAt: string
-  paymentStatus: string
-  phoneNumber: string
+  chapter?: {
+    id: number
+    name: string
+  }
+  school?: {
+    id: number
+    name: string
+  }
+  center?: {
+    id: number
+    name: string
+  }
+}
+
+type Center = {
+  id: number
+  name: string
 }
 
 export function RegistrationsManagement() {
   const { toast } = useToast()
+  
+  // State management
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [centers, setCenters] = useState<Center[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [centerFilter, setCenterFilter] = useState("all")
+  const [paymentFilter, setPaymentFilter] = useState("all")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [paymentFilter, setPaymentFilter] = useState("all")
-  const [centerFilter, setCenterFilter] = useState("all")
-  const [centers, setCenters] = useState<{ id: number, name: string }[]>([])
+  const [total, setTotal] = useState(0)
   
+  // Fetch centers for the coordinator
   useEffect(() => {
-    // Fetch centers for the coordinator
     async function fetchCenters() {
       try {
         const res = await fetch('/api/coordinator/centers')
@@ -54,50 +78,68 @@ export function RegistrationsManagement() {
     fetchCenters()
   }, [])
   
-  useEffect(() => {
-    async function fetchRegistrations() {
+  // Fetch registrations with filters and pagination
+  const fetchRegistrations = async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
       setLoading(true)
-      try {
-        const queryParams = new URLSearchParams({
-          page: page.toString(),
-          status: statusFilter,
-          payment: paymentFilter,
-          center: centerFilter,
-          search: searchQuery
-        })
-        
-        const res = await fetch(`/api/coordinator/registrations?${queryParams.toString()}`)
-        const data = await res.json()
-        
-        if (data.registrations) {
-          setRegistrations(data.registrations)
-          setTotalPages(data.totalPages || 1)
-        }
-      } catch (error) {
-        console.error("Error fetching registrations:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load registrations",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
     }
     
-    fetchRegistrations()
-  }, [page, statusFilter, paymentFilter, centerFilter, searchQuery, toast])
-  
-  async function handleExport() {
     try {
       const queryParams = new URLSearchParams({
-        status: statusFilter,
-        payment: paymentFilter,
-        center: centerFilter,
-        search: searchQuery
+        page: page.toString(),
+        limit: "10",
+        ...(searchQuery && { search: searchQuery }),
+        ...(centerFilter !== "all" && { centerId: centerFilter }),
+        ...(paymentFilter !== "all" && { paymentStatus: paymentFilter })
       })
       
-      const res = await fetch(`/api/coordinator/export?${queryParams.toString()}`)
+      const res = await fetch(`/api/coordinator/register?${queryParams.toString()}`)
+      const data = await res.json()
+      
+      if (res.ok && data.registrations) {
+        setRegistrations(data.registrations)
+        setTotal(data.total || 0)
+        setTotalPages(Math.ceil((data.total || 0) / 10))
+      } else {
+        throw new Error(data.error || 'Failed to fetch registrations')
+      }
+    } catch (error) {
+      console.error("Error fetching registrations:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load registrations",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+  
+  // Fetch registrations on component mount and when filters change
+  useEffect(() => {
+    fetchRegistrations()
+  }, [page, searchQuery, centerFilter, paymentFilter])
+  
+  // Reset to first page when filters change
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1)
+    }
+  }, [searchQuery, centerFilter, paymentFilter])  
+  // Handle export
+  const handleExport = async () => {
+    try {
+      const queryParams = new URLSearchParams({
+        ...(searchQuery && { search: searchQuery }),
+        ...(centerFilter !== "all" && { centerId: centerFilter }),
+        ...(paymentFilter !== "all" && { paymentStatus: paymentFilter }),
+        export: "true"
+      })
+      
+      const res = await fetch(`/api/coordinator/register?${queryParams.toString()}`)
       
       if (!res.ok) {
         throw new Error('Export failed')
@@ -107,10 +149,11 @@ export function RegistrationsManagement() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `registrations-export-${new Date().toISOString().slice(0, 10)}.csv`
+      link.download = `coordinator-registrations-${new Date().toISOString().slice(0, 10)}.csv`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+      URL.revokeObjectURL(url)
       
       toast({
         title: "Success",
@@ -124,53 +167,87 @@ export function RegistrationsManagement() {
         variant: "destructive",
       })
     }
+  }  
+  // Function to download registration slip
+  const downloadRegistrationSlip = async (registrationNumber: string) => {
+    try {
+      const response = await fetch(`/api/registrations/${registrationNumber}/slip`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate registration slip')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `registration-slip-${registrationNumber}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast({
+        title: "Registration Slip Downloaded",
+        description: `Registration slip for ${registrationNumber} downloaded successfully.`,
+      })
+    } catch (error) {
+      console.error('Error downloading registration slip:', error)
+      toast({
+        title: "Download Error",
+        description: "Failed to download registration slip.",
+        variant: "destructive"
+      })
+    }
   }
   
-  // Generate array for pagination
-  const paginationItems = []
-  const maxPagesToShow = 5
-  
-  if (totalPages <= maxPagesToShow) {
-    for (let i = 1; i <= totalPages; i++) {
-      paginationItems.push(i)
+  // Generate pagination items
+  const generatePaginationItems = () => {
+    const items = []
+    const maxPagesToShow = 5
+    
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i)
+      }
+    } else {
+      // Always show first page
+      items.push(1)
+      
+      // Show current page and neighbors
+      const startPage = Math.max(2, page - 1)
+      const endPage = Math.min(totalPages - 1, page + 1)
+      
+      if (startPage > 2) {
+        items.push('ellipsis')
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        items.push(i)
+      }
+      
+      if (endPage < totalPages - 1) {
+        items.push('ellipsis')
+      }
+      
+      // Always show last page
+      if (totalPages > 1) {
+        items.push(totalPages)
+      }
     }
-  } else {
-    // Always show first page
-    paginationItems.push(1)
     
-    // Show current page and neighbors
-    const startPage = Math.max(2, page - 1)
-    const endPage = Math.min(totalPages - 1, page + 1)
-    
-    if (startPage > 2) {
-      paginationItems.push('ellipsis')
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      paginationItems.push(i)
-    }
-    
-    if (endPage < totalPages - 1) {
-      paginationItems.push('ellipsis')
-    }
-    
-    // Always show last page
-    paginationItems.push(totalPages)
-  }
-  
-  const statusOptions = [
-    { label: "All Statuses", value: "all" },
-    { label: "Pending", value: "pending" },
-    { label: "Approved", value: "approved" },
-    { label: "Rejected", value: "rejected" }
-  ]
-  
+    return items
+  }  
+  // Payment filter options
   const paymentOptions = [
     { label: "All Payments", value: "all" },
-    { label: "Paid", value: "paid" },
-    { label: "Unpaid", value: "unpaid" },
+    { label: "Completed", value: "completed" },
     { label: "Pending", value: "pending" }
   ]
+  
+  // Get pagination items
+  const paginationItems = generatePaginationItems()
   
   return (
     <div className="space-y-4">
@@ -178,13 +255,30 @@ export function RegistrationsManagement() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Registrations</CardTitle>
-              <CardDescription>Manage exam registrations for your assigned centers</CardDescription>
+              <CardTitle>Your Registrations</CardTitle>
+              <CardDescription>View and manage student registrations made with your slot balance</CardDescription>
             </div>
-            <Button variant="outline" onClick={handleExport} className="flex items-center gap-1">
-              <Download className="w-4 h-4" />
-              Export CSV
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => fetchRegistrations(true)}
+                disabled={refreshing}
+                className="flex items-center gap-1"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleExport} 
+                className="flex items-center gap-1"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -193,30 +287,17 @@ export function RegistrationsManagement() {
               <div className="relative w-full md:w-[300px]">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search registrations..."
+                  placeholder="Search by name or number..."
                   className="pl-8 w-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                   <SelectTrigger id="payment">
-                    <SelectValue placeholder="Payment" />
+                    <SelectValue placeholder="Payment Status" />
                   </SelectTrigger>
                   <SelectContent>
                     {paymentOptions.map((option) => (
@@ -256,106 +337,123 @@ export function RegistrationsManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Candidate Name</TableHead>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead>Registration Number</TableHead>
                       <TableHead>School</TableHead>
                       <TableHead>Center</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Payment</TableHead>
+                      <TableHead>Payment Status</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead>Contact</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {registrations.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          No registrations found with the current filters
+                          No registrations found
                         </TableCell>
                       </TableRow>
                     ) : (
                       registrations.map((registration) => (
                         <TableRow key={registration.id}>
-                          <TableCell>{registration.candidateName}</TableCell>
-                          <TableCell>{registration.schoolName}</TableCell>
-                          <TableCell>{registration.centerName}</TableCell>                          <TableCell>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              registration.status === "approved" 
-                                ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" 
-                                : registration.status === "rejected"
-                                ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100" 
-                                : "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100"
-                            }`}>
-                              {registration.status ? registration.status.charAt(0).toUpperCase() + registration.status.slice(1) : "Unknown"}
-                            </span>
+                          <TableCell className="font-medium">
+                            {registration.firstName} {registration.lastName}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {registration.registrationNumber}
+                          </TableCell>
+                          <TableCell>
+                            {registration.school?.name || registration.schoolName || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {registration.center?.name || 'N/A'}
                           </TableCell>
                           <TableCell>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              registration.paymentStatus === "paid" 
+                              registration.paymentStatus === "completed" 
                                 ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" 
-                                : registration.paymentStatus === "unpaid"
-                                ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100" 
-                                : "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100"
+                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
                             }`}>
-                              {registration.paymentStatus ? registration.paymentStatus.charAt(0).toUpperCase() + registration.paymentStatus.slice(1) : "Unknown"}
+                              {registration.paymentStatus === "completed" ? "Paid" : "Pending"}
                             </span>
                           </TableCell>
-                          <TableCell>{format(new Date(registration.createdAt), 'PP')}</TableCell>
-                          <TableCell>{registration.phoneNumber}</TableCell>
+                          <TableCell>
+                            {format(new Date(registration.createdAt), 'PP')}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => downloadRegistrationSlip(registration.registrationNumber)}
+                              disabled={registration.paymentStatus !== "completed"}
+                              className="whitespace-nowrap"
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              Download
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
                   </TableBody>
                 </Table>
               </div>
-                <div className="mt-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={(e) => { 
-                          e.preventDefault();
-                          if (page > 1) setPage(page - 1);
-                        }}
-                        className={page === 1 ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                    
-                    {paginationItems.map((item, i) => (
-                      item === 'ellipsis' ? (
-                        <PaginationItem key={`ellipsis-${i}`}>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      ) : (
-                        <PaginationItem key={item}>
-                          <PaginationLink 
-                            onClick={(e) => { 
-                              e.preventDefault();
-                              setPage(item as number);
-                            }}
-                            isActive={page === item}
-                          >
-                            {item}
-                          </PaginationLink>
-                        </PaginationItem>
-                      )
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={(e) => { 
-                          e.preventDefault();
-                          if (page < totalPages) setPage(page + 1);
-                        }}
-                        className={page === totalPages ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+              
+              {totalPages > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => {
+                            if (page > 1) setPage(page - 1)
+                          }}
+                          className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      
+                      {paginationItems.map((item, i) => (
+                        item === 'ellipsis' ? (
+                          <PaginationItem key={`ellipsis-${i}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={`page-${item}`}>
+                            <PaginationLink 
+                              onClick={() => setPage(item as number)}
+                              isActive={page === item}
+                            >
+                              {item}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => {
+                            if (page < totalPages) setPage(page + 1)
+                          }}
+                          className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+              
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                {total > 0 ? (
+                  <p>
+                    Showing {Math.min((page - 1) * 10 + 1, total)} to {Math.min(page * 10, total)} of {total} registration{total !== 1 ? 's' : ''}
+                  </p>
+                ) : (
+                  <p>No registrations found</p>
+                )}
               </div>
             </>
           )}
         </CardContent>
-      </Card>
-    </div>
+      </Card>    </div>
   )
 }

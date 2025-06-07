@@ -28,21 +28,46 @@ export async function initializePayment({
       throw new Error("Paystack secret key is not configured")
     }
 
+    // Validate required parameters
+    if (!email || !email.includes('@')) {
+      throw new Error("Valid email is required")
+    }
+    
+    if (!amount || amount <= 0) {
+      throw new Error("Valid amount is required")
+    }
+    
+    if (!reference || reference.trim().length === 0) {
+      throw new Error("Payment reference is required")
+    }
+    
+    if (!callbackUrl || !callbackUrl.startsWith('http')) {
+      throw new Error("Valid callback URL is required")
+    }
+
     // Convert amount to kobo (smallest currency unit in Nigeria)
     const amountInKobo = Math.round(amount * 100)
 
     const payload: any = {
-      email,
+      email: email.trim(),
       amount: amountInKobo,
-      reference,
+      reference: reference.trim(),
       callback_url: callbackUrl,
-      metadata,
     }
 
-    // Add split code if provided
-    if (splitCode) {
-      payload.split_code = splitCode
+    // Add metadata if provided
+    if (metadata && Object.keys(metadata).length > 0) {
+      payload.metadata = metadata
     }
+
+    // Add split code if provided and valid
+    if (splitCode && splitCode.trim().length > 0) {
+      payload.split_code = splitCode.trim()
+      console.log('Using split code:', splitCode.trim())
+    }
+
+    // Log the payload being sent for debugging
+    console.log('Paystack payload:', JSON.stringify(payload, null, 2));
 
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
@@ -55,8 +80,18 @@ export async function initializePayment({
 
     // Check for network or server errors
     if (!response.ok) {
+      // Get the response body for more detailed error information
+      const errorBody = await response.text();
       console.error('Paystack API error:', response.status, response.statusText);
-      throw new Error(`Paystack API error: ${response.status} ${response.statusText}`);
+      console.error('Paystack error body:', errorBody);
+      
+      // Try to parse error details if it's JSON
+      try {
+        const errorData = JSON.parse(errorBody);
+        throw new Error(`Paystack API error: ${response.status} ${response.statusText} - ${errorData.message || errorBody}`);
+      } catch {
+        throw new Error(`Paystack API error: ${response.status} ${response.statusText} - ${errorBody}`);
+      }
     }
 
     const data = await response.json()

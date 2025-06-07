@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -8,6 +9,7 @@ import { RegistrationStats } from "./registration-stats"
 import { RegistrationChart } from "./registration-chart"
 import { RegistrationsTable } from "./registrations-table"
 import { SplitTransactions } from "./split-transactions"
+import { SlotBalanceDisplay } from "./slot-balance-display"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -20,17 +22,18 @@ import {
   TrendingUp, 
   User,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  UserPlus
 } from "lucide-react"
 
-export function CoordinatorDashboard() {
-  const { toast } = useToast()
+export function CoordinatorDashboard() {  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<any>(null)
   const [coordinator, setCoordinator] = useState<any>(null)
   const [chapterId, setChapterId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
   const [recentActivity, setRecentActivity] = useState<any[]>([])
+  const [slotData, setSlotData] = useState<any>(null)
   
   useEffect(() => {
     async function fetchDashboardData() {
@@ -47,12 +50,15 @@ export function CoordinatorDashboard() {
           // Fetch dashboard stats
           const statsResponse = await fetch(`/api/coordinator/dashboard/stats?chapterId=${userData.user.chapterId}`)
           const statsData = await statsResponse.json()
-          setStats(statsData)
-
-          // Fetch recent activity
+          setStats(statsData)          // Fetch recent activity
           const activityResponse = await fetch(`/api/coordinator/dashboard/recent-activity?chapterId=${userData.user.chapterId}`)
           const activityData = await activityResponse.json()
           setRecentActivity(activityData)
+
+          // Fetch slot data
+          const slotResponse = await fetch('/api/coordinator/slots?action=balance')
+          const slotResponseData = await slotResponse.json()
+          setSlotData(slotResponseData.slots)
         } else {
           // Handle case where user data is not available
           toast({
@@ -147,23 +153,82 @@ export function CoordinatorDashboard() {
             <span>{formattedDate}</span>
           </div>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            asChild
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+          >
+            <Link href="/coordinator/register">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Register Student
+            </Link>
+          </Button>
           <Button 
             onClick={handleExportData} 
+            variant="outline"
             className="w-full sm:w-auto"
           >
             <Download className="mr-2 h-4 w-4" />
-            Export Registrations
+            Export Data
           </Button>
         </div>
       </div>
-      
-      <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
         <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         <p className="text-sm text-blue-800 dark:text-blue-300">
           Welcome, <span className="font-medium">{coordinator?.name || "Coordinator"}</span>
         </p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-green-800 dark:text-green-300">Register New Student</h3>
+                <p className="text-sm text-green-600 dark:text-green-400">Use your slot balance to register candidates</p>
+              </div>
+              <Button size="sm" asChild className="bg-green-600 hover:bg-green-700">
+                <Link href="/coordinator/register">
+                  <UserPlus className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/30 dark:border-purple-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-purple-800 dark:text-purple-300">Manage Slots</h3>
+                <p className="text-sm text-purple-600 dark:text-purple-400">Purchase slots and view balance</p>
+              </div>
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/coordinator/slots">
+                  <CreditCard className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-orange-800 dark:text-orange-300">View Registrations</h3>
+                <p className="text-sm text-orange-600 dark:text-orange-400">Track all student registrations</p>
+              </div>
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/coordinator/registrations">
+                  <ListFilter className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       {stats?.pendingPayments > 0 && (
@@ -175,14 +240,33 @@ export function CoordinatorDashboard() {
             </p>
           </CardContent>
         </Card>
-      )}
-        <RegistrationStats 
+      )}        <RegistrationStats 
         totalRegistrations={stats?.totalRegistrations} 
         pendingPayments={stats?.pendingPayments}
         confirmedRegistrations={stats?.confirmedRegistrations}
         totalSchools={stats?.totalSchools}
         totalCenters={stats?.totalCenters}
-      />
+      />      {/* Slot Balance Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Slot Balance</h2>
+          <div className="flex gap-2">
+            <Button size="sm" asChild className="bg-blue-600 hover:bg-blue-700">
+              <Link href="/coordinator/register">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Register Student
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/coordinator/slots">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Manage Slots
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <SlotBalanceDisplay slots={slotData} loading={loading} />
+      </div>
         <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid grid-cols-4 md:w-auto w-full">
           <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>

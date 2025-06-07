@@ -50,12 +50,15 @@ export async function POST(request: Request) {
       splitCode: registration.chapter?.splitCode
     });
 
+    // Temporarily disable split code to test if that's causing the issue
+    const useSplitCode = false; // Set to true once split codes are properly configured
+    
     const paymentResult = await initializePayment({
       email: registration.parentEmail,
       amount: amount,
       reference,
       callbackUrl,
-      splitCode: registration.chapter?.splitCode || undefined,
+      splitCode: useSplitCode ? (registration.chapter?.splitCode || undefined) : undefined,
       metadata: {
         registrationId: registration.id,
         registrationNumber: registration.registrationNumber,
