@@ -24,6 +24,7 @@ import {
   Code
 } from "lucide-react"
 import { SqlImport } from "./sql-import"
+import { PurchasesTable } from './purchases-table'
 
 export function AdminDashboard() {
   const { toast } = useToast()
@@ -155,7 +156,7 @@ export function AdminDashboard() {
       setVerifying(false)
     }
   }
-    if (loading) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-4">
         <Skeleton className="h-12 w-12 rounded-full" />
@@ -285,11 +286,18 @@ export function AdminDashboard() {
                             {activity.studentName} from {activity.chapterName}
                           </p>
                           <div className="flex text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3 mr-1" /> 
+                            <Clock className="h-3 w-3 mr-1" />
                             <span>{activity.timeAgo}</span>
                           </div>
                         </div>
-                        <Badge variant={activity.paymentStatus === 'completed' ? 'default' : 'outline'} className="ml-auto">
+                        <Badge
+                          variant={
+                            activity.paymentStatus === 'completed'
+                              ? 'default'
+                              : 'outline'
+                          }
+                          className="ml-auto"
+                        >
                           {activity.paymentStatus === 'completed' ? 'Paid' : 'Pending'}
                         </Badge>
                       </div>
@@ -299,8 +307,11 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+          {/* Recent Slot Purchases Table */}
+          <h2 className="text-xl font-semibold mt-6">Recent Slot Purchases</h2>
+          <PurchasesTable />
         </TabsContent>
-          <TabsContent value="registrations" className="space-y-4">
+        <TabsContent value="registrations" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>All Registrations</CardTitle>

@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const chapterId = searchParams.get("chapterId")
     const status = searchParams.get("status")
+    const splitCode = searchParams.get("splitCode")
 
     // Prepare filters
     const filters: any = {}
@@ -23,6 +24,10 @@ export async function GET(request: Request) {
 
     if (status && status !== "all") {
       filters.status = status as "pending" | "completed"
+    }
+
+    if (splitCode && splitCode !== "all") {
+      filters.splitCode = splitCode
     }
 
     // Export registrations with filters

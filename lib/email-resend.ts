@@ -34,7 +34,7 @@ export async function sendSlotPurchaseConfirmationEmail(data: SlotPurchaseEmailD
     console.log('📧 Sending slot purchase confirmation email to:', data.to)
 
     const result = await resend.emails.send({
-      from: 'NAPPS SPRS <noreply@napps.org.ng>',
+      from: process.env.EMAIL_FROM || 'NAPPS SPRS <no-reply@exam.nappsnasarawa.com>',
       to: [data.to],
       subject: `Slot Purchase Confirmation - ${data.slotsPurchased} Slots Added`,
       react: SlotPurchaseConfirmationEmail({

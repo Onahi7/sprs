@@ -137,6 +137,7 @@ export const registrations = pgTable("registrations", {
   passportUrl: text("passport_url").notNull(),
   paymentStatus: text("payment_status", { enum: ["pending", "completed"] }).default("pending"),
   paymentReference: text("payment_reference"),
+  splitCodeUsed: text("split_code_used"), // Track which split code was used for this registration
   coordinatorRegisteredBy: integer("coordinator_registered_by").references(() => chapterCoordinators.id),
   registrationType: text("registration_type", { enum: ["public", "coordinator"] }).default("public"),
   registrationSlipDownloaded: boolean("registration_slip_downloaded").default(false),

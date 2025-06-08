@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getDbConnection } from "@/db/utils"
 import { getSession } from "@/lib/auth"
 import { registrations, chapters, schools, centers } from "@/db/schema"
-import { eq, ilike, and, or, count, desc } from "drizzle-orm"
+import { eq, ilike, and, or, count, desc, isNull, isNotNull } from "drizzle-orm"
 
 export async function GET(request: Request) {
   const session = await getSession()
@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search") || ""
     const chapterId = searchParams.get("chapterId")
     const status = searchParams.get("status")
+    const splitCode = searchParams.get("splitCode")
 
     const offset = (page - 1) * limit
     const db = getDbConnection()
@@ -31,6 +32,14 @@ export async function GET(request: Request) {
 
     if (status && status !== "all") {
       whereConditions.push(eq(registrations.paymentStatus, status as "pending" | "completed"))
+    }
+
+    if (splitCode && splitCode !== "all") {
+      if (splitCode === "with_split_code") {
+        whereConditions.push(isNotNull(registrations.splitCodeUsed))
+      } else if (splitCode === "without_split_code") {
+        whereConditions.push(isNull(registrations.splitCodeUsed))
+      }
     }
 
     if (search) {
@@ -79,6 +88,8 @@ export async function GET(request: Request) {
       schoolId: reg.schoolId,
       schoolName: reg.school?.name || reg.schoolName || 'Unknown School',
       paymentStatus: reg.paymentStatus,
+      splitCodeUsed: reg.splitCodeUsed,
+      paymentReference: reg.paymentReference,
       createdAt: reg.createdAt,
     }))
 

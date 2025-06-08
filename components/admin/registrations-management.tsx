@@ -25,6 +25,8 @@ type Registration = {
   schoolId: number | null
   schoolName: string
   paymentStatus: "pending" | "completed"
+  splitCodeUsed: string | null
+  paymentReference: string | null
   createdAt: string
 }
 
@@ -48,6 +50,7 @@ export function RegistrationsManagement() {
   const [searchQuery, setSearchQuery] = useState("")
   const [chapterFilter, setChapterFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [splitCodeFilter, setSplitCodeFilter] = useState("all")
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     page: 1,
@@ -58,10 +61,9 @@ export function RegistrationsManagement() {
   useEffect(() => {
     fetchChapters()
   }, [])
-  
-  useEffect(() => {
+    useEffect(() => {
     fetchRegistrations()
-  }, [pagination.page, chapterFilter, statusFilter, searchQuery])
+  }, [pagination.page, chapterFilter, statusFilter, splitCodeFilter, searchQuery])
   
   async function fetchRegistrations() {
     setLoading(true)
@@ -71,13 +73,16 @@ export function RegistrationsManagement() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString()
       })
-      
-      if (chapterFilter !== "all") {
+        if (chapterFilter !== "all") {
         params.append("chapterId", chapterFilter)
       }
       
       if (statusFilter !== "all") {
         params.append("status", statusFilter)
+      }
+      
+      if (splitCodeFilter !== "all") {
+        params.append("splitCode", splitCodeFilter)
       }
       
       if (searchQuery) {
@@ -141,9 +146,12 @@ export function RegistrationsManagement() {
       if (chapterFilter !== "all") {
         params.append("chapterId", chapterFilter)
       }
-      
-      if (statusFilter !== "all") {
+        if (statusFilter !== "all") {
         params.append("status", statusFilter)
+      }
+      
+      if (splitCodeFilter !== "all") {
+        params.append("splitCode", splitCodeFilter)
       }
       
       if (searchQuery) {
@@ -272,8 +280,7 @@ export function RegistrationsManagement() {
                   ))}
                 </SelectContent>
               </Select>
-              
-              <Select
+                <Select
                 value={statusFilter}
                 onValueChange={(value) => {
                   setStatusFilter(value)
@@ -287,6 +294,23 @@ export function RegistrationsManagement() {
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select
+                value={splitCodeFilter}
+                onValueChange={(value) => {
+                  setSplitCodeFilter(value)
+                  setPagination({...pagination, page: 1})
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Split code usage" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payments</SelectItem>
+                  <SelectItem value="with_split_code">With Split Code</SelectItem>
+                  <SelectItem value="without_split_code">No Split Code</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -311,20 +335,19 @@ export function RegistrationsManagement() {
           ) : (
             <>
               <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
+                <Table>                  <TableHeader>
                     <TableRow>
                       <TableHead>Reg. Number</TableHead>
                       <TableHead>Student Name</TableHead>
                       <TableHead>Chapter</TableHead>
                       <TableHead>School</TableHead>
+                      <TableHead>Split Code</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {registrations.map((reg) => (
+                  <TableBody>                    {registrations.map((reg) => (
                       <TableRow key={reg.id}>
                         <TableCell className="font-medium">{reg.registrationNumber}</TableCell>
                         <TableCell>
@@ -332,6 +355,15 @@ export function RegistrationsManagement() {
                         </TableCell>
                         <TableCell>{reg.chapterName}</TableCell>
                         <TableCell>{reg.schoolName}</TableCell>
+                        <TableCell>
+                          {reg.splitCodeUsed ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {reg.splitCodeUsed}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">No split code</span>
+                          )}
+                        </TableCell>
                         <TableCell>{formatDate(reg.createdAt)}</TableCell>
                         <TableCell>
                           <Badge variant={reg.paymentStatus === "completed" ? "default" : "outline"}>

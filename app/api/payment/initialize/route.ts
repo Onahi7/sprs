@@ -47,18 +47,17 @@ export async function POST(request: Request) {
       amount,
       reference,
       callbackUrl,
-      splitCode: registration.chapter?.splitCode
+      chapterSplitCode: registration.chapter?.splitCode,
+      registrationNumber: registration.registrationNumber
     });
 
-    // Temporarily disable split code to test if that's causing the issue
-    const useSplitCode = false; // Set to true once split codes are properly configured
-    
+    // Use chapter-specific split code for normal student registration
     const paymentResult = await initializePayment({
       email: registration.parentEmail,
       amount: amount,
       reference,
       callbackUrl,
-      splitCode: useSplitCode ? (registration.chapter?.splitCode || undefined) : undefined,
+      splitCode: registration.chapter?.splitCode || undefined,
       metadata: {
         registrationId: registration.id,
         registrationNumber: registration.registrationNumber,
@@ -70,11 +69,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: paymentResult.error }, { status: 500 })
     }
 
-    // Update registration with payment reference
+    // Update registration with payment reference and split code used
     await db
       .update(registrations)
       .set({
         paymentReference: reference,
+        splitCodeUsed: registration.chapter?.splitCode || null,
       })
       .where(eq(registrations.registrationNumber, registration.registrationNumber))
 

@@ -20,11 +20,12 @@ export async function importCSV(file: File, entityType: "chapter" | "school" | "
 import { stringify } from "csv-stringify/sync"
 import { getDbConnection } from "@/db/utils"
 import { chapters, schools, centers, registrations } from "@/db/schema"
-import { eq, and, gte, lte, desc, asc } from "drizzle-orm"
+import { eq, and, gte, lte, desc, asc, isNull, isNotNull } from "drizzle-orm"
 
 export async function exportRegistrationsToCSV(filters: {
   chapterId?: number
   status?: "pending" | "completed"
+  splitCode?: string
   startDate?: Date
   endDate?: Date
 }) {
@@ -40,6 +41,14 @@ export async function exportRegistrationsToCSV(filters: {
     
     if (filters.status) {
       whereConditions.push(eq(registrations.paymentStatus, filters.status))
+    }
+    
+    if (filters.splitCode) {
+      if (filters.splitCode === "with_split_code") {
+        whereConditions.push(isNotNull(registrations.splitCodeUsed))
+      } else if (filters.splitCode === "without_split_code") {
+        whereConditions.push(isNull(registrations.splitCodeUsed))
+      }
     }
     
     if (filters.startDate) {
@@ -76,6 +85,7 @@ export async function exportRegistrationsToCSV(filters: {
       "Registration Date": reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : "",
       "Payment Status": reg.paymentStatus,
       "Payment Reference": reg.paymentReference || "",
+      "Split Code Used": reg.splitCodeUsed || "No split code",
     }))
 
     // Convert to CSV using csv-stringify
