@@ -38,7 +38,6 @@ export async function middleware(req: NextRequest) {
   console.log("Middleware: Auth token exists?", isAuth)
   
   let decodedToken: DecodedToken | null = null
-  
   // Verify token if it exists
   if (token) {
     console.log("Middleware: Verifying token...")
