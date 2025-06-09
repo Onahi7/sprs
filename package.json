@@ -72,7 +72,7 @@
     "cmdk": "1.0.4",
     "csv-parse": "^5.6.0",
     "csv-stringify": "^6.5.2",
-    "date-fns": "4.1.0",
+    "date-fns": "3.6.0",
     "drizzle-orm": "latest",
     "embla-carousel-react": "8.5.1",
     "expo-sqlite": "latest",
