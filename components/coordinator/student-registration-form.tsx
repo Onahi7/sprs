@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, Upload, User, School, Users, Phone, Mail, AlertCircle, CheckCircle, Camera } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader2, Upload, User, School, Users, Phone, Mail, AlertCircle, CheckCircle, Camera, X, RefreshCw } from "lucide-react"
 
 interface Chapter {
   id: number
@@ -64,6 +65,17 @@ export function CoordinatorStudentRegistrationForm() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  
+  // Camera-related state for passport upload
+  const [activeTab, setActiveTab] = useState<string>("upload")
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const [isCameraAvailable, setIsCameraAvailable] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [isCapturing, setIsCapturing] = useState(false)
+  
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  
   // Data states
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [schools, setSchools] = useState<School[]>([])
@@ -385,6 +397,167 @@ export function CoordinatorStudentRegistrationForm() {
     }
   }
 
+  // Camera functionality for passport upload
+  useEffect(() => {
+    const checkCameraAvailability = async () => {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setIsCameraAvailable(false)
+          setCameraError("Camera API not supported by this browser")
+          return
+        }
+
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+          setIsCameraAvailable(false)
+          setCameraError("Camera access requires HTTPS connection")
+          return
+        }
+
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const hasCamera = devices.some(device => device.kind === 'videoinput')
+        
+        if (!hasCamera) {
+          setIsCameraAvailable(false)
+          setCameraError("No camera devices found")
+          return
+        }
+
+        setIsCameraAvailable(true)
+        setCameraError(null)
+      } catch (error) {
+        setIsCameraAvailable(false)
+        setCameraError(`Camera check failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    }
+    
+    checkCameraAvailability()
+    
+    return () => {
+      stopCamera()
+    }
+  }, [])
+
+  const startCamera = async () => {
+    try {
+      setCameraError(null)
+      
+      let stream: MediaStream
+      
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } 
+        })
+      } catch (idealError) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      }
+      
+      setCameraStream(stream)
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (error) {
+      let errorMessage = "Could not access camera. "
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage += "Please allow camera permissions and try again."
+        } else if (error.name === 'NotFoundError') {
+          errorMessage += "No camera device found."
+        } else if (error.name === 'NotReadableError') {
+          errorMessage += "Camera is already in use by another application."
+        } else {
+          errorMessage += error.message
+        }
+      }
+      
+      setCameraError(errorMessage)
+      setActiveTab("upload")
+    }
+  }
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop())
+      setCameraStream(null)
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
+    }
+  }
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) {
+      setCameraError("Camera capture failed: Missing video or canvas element")
+      return
+    }
+
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+      setCameraError("Please wait for camera to fully load before capturing")
+      return
+    }
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setCameraError("Camera feed not properly loaded")
+      return
+    }
+
+    setIsCapturing(true)
+    
+    try {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        throw new Error("Could not get canvas context")
+      }
+      
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      
+      canvas.toBlob(async (blob) => {
+        try {
+          if (!blob) {
+            throw new Error("Failed to create blob from canvas")
+          }
+
+          const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" })
+          
+          // Upload the captured photo
+          await handlePassportUpload(file)
+          
+          // Stop camera after capture
+          stopCamera()
+          setActiveTab("upload")
+          setCameraError(null)
+        } catch (error) {
+          setCameraError(`Failed to process captured photo: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        } finally {
+          setIsCapturing(false)
+        }
+      }, "image/jpeg", 0.9)
+    } catch (error) {
+      setCameraError(`Photo capture failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setIsCapturing(false)
+    }
+  }
+
+  // Handle tab change for camera
+  useEffect(() => {
+    if (activeTab === "camera") {
+      startCamera()
+    } else {
+      stopCamera()
+    }
+  }, [activeTab])
+
   const renderStudentInfoStep = () => (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
@@ -624,8 +797,7 @@ export function CoordinatorStudentRegistrationForm() {
               </div>
             )}
           </AlertDescription>
-        </Alert>
-      ) : null}
+        </Alert>      ) : null}
       
       <div className="space-y-4">
         <Alert>
@@ -635,73 +807,172 @@ export function CoordinatorStudentRegistrationForm() {
           </AlertDescription>
         </Alert>
 
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-          {formData.passportUrl ? (
-            <div className="space-y-4">
+        {formData.passportUrl ? (
+          /* Show uploaded image with option to change */
+          <div className="text-center space-y-4">
+            <div className="relative inline-block">
               <img
                 src={formData.passportUrl}
                 alt="Passport"
-                className="mx-auto h-32 w-32 object-cover rounded-lg border"
+                className="mx-auto h-40 w-32 object-cover rounded-lg border"
               />
-              <div className="flex items-center justify-center gap-2 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">Passport uploaded successfully</span>
-              </div>
               <Button
-                variant="outline"
-                onClick={() => document.getElementById('passport-upload')?.click()}
-                disabled={uploading}
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={() => updateFormData({ passportUrl: '' })}
               >
-                Change Photo
+                <X className="h-4 w-4" />
               </Button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <div>
-                <Button
-                  onClick={() => document.getElementById('passport-upload')?.click()}
-                  disabled={uploading}
-                  className="relative"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    'Upload Passport'
-                  )}
-                </Button>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Click to upload or drag and drop
+            <div className="flex items-center justify-center gap-2 text-green-600">
+              <CheckCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">Passport uploaded successfully</span>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => updateFormData({ passportUrl: '' })}
+              disabled={uploading}
+            >
+              Change Photo
+            </Button>
+          </div>
+        ) : (
+          /* Upload interface with camera option */
+          <Tabs 
+            defaultValue="upload" 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Photo
+              </TabsTrigger>
+              <TabsTrigger value="camera" disabled={!isCameraAvailable}>
+                <Camera className="mr-2 h-4 w-4" />
+                {isCameraAvailable ? "Use Camera" : "Camera Unavailable"}
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Show camera status message when not available */}
+            {!isCameraAvailable && cameraError && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-700">
+                  <strong>Camera not available:</strong> {cameraError}
+                </p>
+                <p className="text-xs text-yellow-600 mt-1">
+                  You can still upload a photo using the "Upload Photo" tab.
                 </p>
               </div>
-            </div>
-          )}
-          
-          <input
-            id="passport-upload"
-            type="file"
-            accept="image/jpeg,image/png"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) {
-                if (file.size > 2 * 1024 * 1024) {
-                  toast({
-                    title: "File too large",
-                    description: "Please select an image smaller than 2MB",
-                    variant: "destructive"
-                  })
-                  return
-                }
-                handlePassportUpload(file)
-              }
-            }}
-          />
-        </div>
-      </div>
+            )}
+            
+            <TabsContent value="upload">
+              <Card className="border-dashed border-2 cursor-pointer hover:bg-muted/50 transition-colors">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-1">Click to upload or drag and drop</p>
+                  <p className="text-xs text-muted-foreground">JPG, JPEG or PNG (max. 2MB)</p>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png"
+                    className="hidden"
+                    id="passport-upload-input"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        if (file.size > 2 * 1024 * 1024) {
+                          toast({
+                            title: "File too large",
+                            description: "Please select an image smaller than 2MB",
+                            variant: "destructive"
+                          })
+                          return
+                        }
+                        handlePassportUpload(file)
+                      }
+                    }}
+                    disabled={uploading}
+                  />
+                  <label htmlFor="passport-upload-input" className="w-full h-full absolute inset-0 cursor-pointer">
+                    <span className="sr-only">Upload passport photo</span>
+                  </label>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="camera">
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-6">
+                  {cameraError ? (
+                    <div className="text-center space-y-4">
+                      <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">
+                        {cameraError}
+                      </div>
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setCameraError(null)
+                          startCamera()
+                        }}
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Retry Camera Access
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative w-full max-w-[320px] bg-black rounded-md overflow-hidden">
+                        <video 
+                          ref={videoRef} 
+                          autoPlay 
+                          playsInline 
+                          muted 
+                          className="w-full h-full object-cover"
+                        />
+                        <canvas ref={canvasRef} className="hidden" />
+                        
+                        {!cameraStream && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                            <div className="text-white text-sm">Loading camera...</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-center mt-4 space-x-2">
+                        <Button 
+                          type="button" 
+                          onClick={capturePhoto}
+                          disabled={!cameraStream || isCapturing || uploading}
+                          className="flex items-center"
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          {isCapturing ? "Capturing..." : uploading ? "Uploading..." : "Capture Photo"}
+                        </Button>
+                        
+                        {cameraStream && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              stopCamera()
+                              setActiveTab("upload")
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}      </div>
     </div>
   )
 
