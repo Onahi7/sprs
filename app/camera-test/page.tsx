@@ -212,13 +212,13 @@ export default function CameraTestPage() {
         <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <strong>MediaDevices API:</strong> {navigator.mediaDevices ? "✅ Supported" : "❌ Not supported"}
+              <strong>MediaDevices API:</strong> {isClient && navigator.mediaDevices ? "✅ Supported" : "❌ Not supported"}
             </div>
             <div>
-              <strong>getUserMedia:</strong> {typeof navigator.mediaDevices?.getUserMedia === 'function' ? "✅ Supported" : "❌ Not supported"}
+              <strong>getUserMedia:</strong> {isClient && typeof navigator.mediaDevices?.getUserMedia === 'function' ? "✅ Supported" : "❌ Not supported"}
             </div>
             <div>
-              <strong>HTTPS Protocol:</strong> {location.protocol === 'https:' || location.hostname === 'localhost' ? "✅ Secure" : "❌ Requires HTTPS"}
+              <strong>HTTPS Protocol:</strong> {isClient ? ((window.location.protocol === 'https:' || window.location.hostname === 'localhost') ? "✅ Secure" : "❌ Requires HTTPS") : "Unknown"}
             </div>
             <div>
               <strong>Video Devices:</strong> {deviceInfo.length} found
