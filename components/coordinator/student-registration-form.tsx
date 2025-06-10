@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Upload, User, School, Users, Phone, Mail, AlertCircle, CheckCircle, Camera, X, RefreshCw } from "lucide-react"
+import { Loader2, Upload, User, School, Users, Phone, Mail, AlertCircle, CheckCircle, Camera, X, RefreshCw, RotateCcw } from "lucide-react"
 
 interface Chapter {
   id: number
@@ -65,13 +65,13 @@ export function CoordinatorStudentRegistrationForm() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
-  
-  // Camera-related state for passport upload
+    // Camera-related state for passport upload
   const [activeTab, setActiveTab] = useState<string>("upload")
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [isCameraAvailable, setIsCameraAvailable] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
+  const [cameraFacingMode, setCameraFacingMode] = useState<"environment" | "user">("environment") // Start with back camera
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -431,8 +431,7 @@ export function CoordinatorStudentRegistrationForm() {
     }
     
     checkCameraAvailability()
-    
-    return () => {
+      return () => {
       stopCamera()
     }
   }, [])
@@ -444,15 +443,30 @@ export function CoordinatorStudentRegistrationForm() {
       let stream: MediaStream
       
       try {
+        // Use the selected camera facing mode
         stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
-            facingMode: "user",
+            facingMode: cameraFacingMode,
             width: { ideal: 640 },
             height: { ideal: 480 }
           } 
         })
-      } catch (idealError) {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      } catch (facingModeError) {
+        try {
+          // Fallback to the opposite camera
+          const fallbackMode = cameraFacingMode === "environment" ? "user" : "environment"
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              facingMode: fallbackMode,
+              width: { ideal: 640 },
+              height: { ideal: 480 }
+            } 
+          })
+          setCameraFacingMode(fallbackMode) // Update state to reflect actual camera
+        } catch (fallbackError) {
+          // Final fallback to any available camera
+          stream = await navigator.mediaDevices.getUserMedia({ video: true })
+        }
       }
       
       setCameraStream(stream)
@@ -479,7 +493,6 @@ export function CoordinatorStudentRegistrationForm() {
       setActiveTab("upload")
     }
   }
-
   const stopCamera = () => {
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop())
@@ -488,6 +501,20 @@ export function CoordinatorStudentRegistrationForm() {
         videoRef.current.srcObject = null
       }
     }
+  }
+
+  const switchCamera = async () => {
+    // Stop current camera
+    stopCamera()
+    
+    // Switch facing mode
+    const newFacingMode = cameraFacingMode === "environment" ? "user" : "environment"
+    setCameraFacingMode(newFacingMode)
+    
+    // Small delay to ensure camera is properly released
+    setTimeout(() => {
+      startCamera()
+    }, 100)
   }
 
   const capturePhoto = () => {
@@ -868,39 +895,45 @@ export function CoordinatorStudentRegistrationForm() {
                 </p>
               </div>
             )}
-            
-            <TabsContent value="upload">
-              <Card className="border-dashed border-2 cursor-pointer hover:bg-muted/50 transition-colors">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground mb-1">Click to upload or drag and drop</p>
-                  <p className="text-xs text-muted-foreground">JPG, JPEG or PNG (max. 2MB)</p>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png"
-                    className="hidden"
-                    id="passport-upload-input"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        if (file.size > 2 * 1024 * 1024) {
-                          toast({
-                            title: "File too large",
-                            description: "Please select an image smaller than 2MB",
-                            variant: "destructive"
-                          })
-                          return
-                        }
-                        handlePassportUpload(file)
+              <TabsContent value="upload">
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png"
+                  className="hidden"
+                  id="passport-upload-input"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      if (file.size > 2 * 1024 * 1024) {
+                        toast({
+                          title: "File too large",
+                          description: "Please select an image smaller than 2MB",
+                          variant: "destructive"
+                        })
+                        return
                       }
-                    }}
-                    disabled={uploading}
-                  />
-                  <label htmlFor="passport-upload-input" className="w-full h-full absolute inset-0 cursor-pointer">
-                    <span className="sr-only">Upload passport photo</span>
-                  </label>
-                </CardContent>
-              </Card>
+                      handlePassportUpload(file)
+                    }
+                  }}
+                  disabled={uploading}
+                />
+                <label htmlFor="passport-upload-input" className="block cursor-pointer">
+                  <Card className="border-dashed border-2 hover:bg-muted/50 transition-colors">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground mb-1">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground">JPG, JPEG or PNG (max. 2MB)</p>
+                      {uploading && (
+                        <div className="flex items-center mt-2">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span className="text-sm">Uploading...</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </label>
+              </div>
             </TabsContent>
             
             <TabsContent value="camera">
@@ -924,8 +957,7 @@ export function CoordinatorStudentRegistrationForm() {
                       </Button>
                     </div>
                   ) : (
-                    <>
-                      <div className="relative w-full max-w-[320px] bg-black rounded-md overflow-hidden">
+                    <>                      <div className="relative w-full max-w-[320px] bg-black rounded-md overflow-hidden">
                         <video 
                           ref={videoRef} 
                           autoPlay 
@@ -935,14 +967,29 @@ export function CoordinatorStudentRegistrationForm() {
                         />
                         <canvas ref={canvasRef} className="hidden" />
                         
+                        {/* Camera type indicator */}
+                        <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                          {cameraFacingMode === "environment" ? "Back Camera" : "Front Camera"}
+                        </div>
+                        
                         {!cameraStream && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                             <div className="text-white text-sm">Loading camera...</div>
                           </div>
                         )}
                       </div>
-                      
-                      <div className="flex justify-center mt-4 space-x-2">
+                        <div className="flex justify-center mt-4 space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={switchCamera}
+                          disabled={!cameraStream || isCapturing}
+                          title={`Switch to ${cameraFacingMode === "environment" ? "front" : "back"} camera`}
+                        >
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Switch
+                        </Button>
+                        
                         <Button 
                           type="button" 
                           onClick={capturePhoto}
