@@ -45,6 +45,13 @@ type Center = {
   name: string
 }
 
+type School = {
+  id: number | null
+  name: string
+  chapterId?: number
+  isManual?: boolean
+}
+
 export function RegistrationsManagement() {
   const { toast } = useToast()
   
@@ -53,29 +60,42 @@ export function RegistrationsManagement() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [centers, setCenters] = useState<Center[]>([])
+  const [schools, setSchools] = useState<School[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [centerFilter, setCenterFilter] = useState("all")
+  const [schoolFilter, setSchoolFilter] = useState("all")
   const [paymentFilter, setPaymentFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("newest")
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   
-  // Fetch centers for the coordinator
+  // Fetch centers and schools for the coordinator
   useEffect(() => {
-    async function fetchCenters() {
+    async function fetchFiltersData() {
       try {
-        const res = await fetch('/api/coordinator/centers')
-        const data = await res.json()
+        // Fetch centers
+        const centersRes = await fetch('/api/coordinator/centers')
+        const centersData = await centersRes.json()
         
-        if (data.centers) {
-          setCenters(data.centers)
+        if (centersData.centers) {
+          setCenters(centersData.centers)
+        }
+
+        // Fetch schools
+        const schoolsRes = await fetch('/api/coordinator/schools')
+        const schoolsData = await schoolsRes.json()
+        
+        if (schoolsData.schools) {
+          setSchools(schoolsData.schools)
         }
       } catch (error) {
-        console.error("Error fetching centers:", error)
+        console.error("Error fetching filter data:", error)
       }
     }
     
-    fetchCenters()
+    fetchFiltersData()
   }, [])
   
   // Fetch registrations with filters and pagination
@@ -86,13 +106,14 @@ export function RegistrationsManagement() {
       setLoading(true)
     }
     
-    try {
-      const queryParams = new URLSearchParams({
+    try {      const queryParams = new URLSearchParams({
         page: page.toString(),
-        limit: "10",
+        limit: pageSize.toString(),
         ...(searchQuery && { search: searchQuery }),
         ...(centerFilter !== "all" && { centerId: centerFilter }),
-        ...(paymentFilter !== "all" && { paymentStatus: paymentFilter })
+        ...(schoolFilter !== "all" && { schoolId: schoolFilter }),
+        ...(paymentFilter !== "all" && { paymentStatus: paymentFilter }),
+        ...(sortBy && { sortBy })
       })
       
       const res = await fetch(`/api/coordinator/register?${queryParams.toString()}`)
@@ -101,7 +122,7 @@ export function RegistrationsManagement() {
       if (res.ok && data.registrations) {
         setRegistrations(data.registrations)
         setTotal(data.total || 0)
-        setTotalPages(Math.ceil((data.total || 0) / 10))
+        setTotalPages(Math.ceil((data.total || 0) / pageSize))
       } else {
         throw new Error(data.error || 'Failed to fetch registrations')
       }
@@ -116,26 +137,25 @@ export function RegistrationsManagement() {
       setLoading(false)
       setRefreshing(false)
     }
-  }
-  
-  // Fetch registrations on component mount and when filters change
+  }  // Fetch registrations on component mount and when filters change
   useEffect(() => {
     fetchRegistrations()
-  }, [page, searchQuery, centerFilter, paymentFilter])
+  }, [page, pageSize, searchQuery, centerFilter, schoolFilter, paymentFilter, sortBy])
   
   // Reset to first page when filters change
   useEffect(() => {
     if (page !== 1) {
       setPage(1)
     }
-  }, [searchQuery, centerFilter, paymentFilter])  
+  }, [pageSize, searchQuery, centerFilter, schoolFilter, paymentFilter, sortBy])
   // Handle export
   const handleExport = async () => {
-    try {
-      const queryParams = new URLSearchParams({
+    try {      const queryParams = new URLSearchParams({
         ...(searchQuery && { search: searchQuery }),
         ...(centerFilter !== "all" && { centerId: centerFilter }),
+        ...(schoolFilter !== "all" && { schoolId: schoolFilter }),
         ...(paymentFilter !== "all" && { paymentStatus: paymentFilter }),
+        ...(sortBy && { sortBy }),
         export: "true"
       })
       
@@ -238,12 +258,24 @@ export function RegistrationsManagement() {
     }
     
     return items
-  }  
-  // Payment filter options
+  }    // Filter options
   const paymentOptions = [
     { label: "All Payments", value: "all" },
     { label: "Completed", value: "completed" },
     { label: "Pending", value: "pending" }
+  ]
+  const sortOptions = [
+    { label: "Newest First", value: "newest" },
+    { label: "Oldest First", value: "oldest" },
+    { label: "Name (A-Z)", value: "name" },
+    { label: "Registration Number", value: "regnum" }
+  ]
+
+  const pageSizeOptions = [
+    { label: "10 per page", value: 10 },
+    { label: "20 per page", value: 20 },
+    { label: "50 per page", value: 50 },
+    { label: "100 per page", value: 100 }
   ]
   
   // Get pagination items
@@ -292,9 +324,7 @@ export function RegistrationsManagement() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              </div>              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                   <SelectTrigger id="payment">
                     <SelectValue placeholder="Payment Status" />
@@ -317,6 +347,36 @@ export function RegistrationsManagement() {
                     {centers.map((center) => (
                       <SelectItem key={center.id} value={center.id.toString()}>
                         {center.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={schoolFilter} onValueChange={setSchoolFilter}>
+                  <SelectTrigger id="school">
+                    <SelectValue placeholder="School" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Schools</SelectItem>
+                    {schools.map((school) => (
+                      <SelectItem 
+                        key={school.id || `manual_${school.name}`} 
+                        value={school.id ? school.id.toString() : `manual_${school.name}`}
+                      >
+                        {school.name} {school.isManual ? "(Manual)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger id="sort">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -397,10 +457,24 @@ export function RegistrationsManagement() {
                     )}
                   </TableBody>
                 </Table>
-              </div>
-              
-              {totalPages > 1 && (
-                <div className="mt-4 flex justify-center">
+              </div>              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Items per page:</span>
+                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pageSizeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value.toString()}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {totalPages > 1 && (
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
@@ -439,13 +513,12 @@ export function RegistrationsManagement() {
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
-                </div>
-              )}
-              
-              <div className="mt-4 text-center text-sm text-muted-foreground">
+                )}
+              </div>
+                <div className="mt-4 text-center text-sm text-muted-foreground">
                 {total > 0 ? (
                   <p>
-                    Showing {Math.min((page - 1) * 10 + 1, total)} to {Math.min(page * 10, total)} of {total} registration{total !== 1 ? 's' : ''}
+                    Showing {Math.min((page - 1) * pageSize + 1, total)} to {Math.min(page * pageSize, total)} of {total} registration{total !== 1 ? 's' : ''}
                   </p>
                 ) : (
                   <p>No registrations found</p>

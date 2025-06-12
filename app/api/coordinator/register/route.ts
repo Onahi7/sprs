@@ -196,28 +196,147 @@ export async function GET(request: Request) {
 
     const db = getDbConnection()
     const { searchParams } = new URL(request.url)
-    const limit = Number.parseInt(searchParams.get("limit") || "50")
+    
+    // Parse query parameters with defaults
+    const page = Math.max(1, Number.parseInt(searchParams.get("page") || "1"))
+    const limit = Math.min(100, Math.max(1, Number.parseInt(searchParams.get("limit") || "10")))
+    const offset = (page - 1) * limit
+    const search = searchParams.get("search")?.trim()
+    const centerId = searchParams.get("centerId")
+    const schoolId = searchParams.get("schoolId") 
+    const paymentStatus = searchParams.get("paymentStatus")
+    const sortBy = searchParams.get("sortBy") || "newest"
+    const isExport = searchParams.get("export") === "true"
+    
     const coordinatorId = session.id!
 
-    // Get registrations made by this coordinator
+    // Build where conditions
+    const conditions = [eq(registrations.coordinatorRegisteredBy, coordinatorId)]
+      // Add search filter (name or registration number)
+    if (search) {
+      const { ilike, or } = await import("drizzle-orm")
+      const searchCondition = or(
+        ilike(registrations.firstName, `%${search}%`),
+        ilike(registrations.lastName, `%${search}%`),
+        ilike(registrations.registrationNumber, `%${search}%`)
+      )
+      if (searchCondition) {
+        conditions.push(searchCondition)
+      }
+    }
+    
+    // Add center filter
+    if (centerId && centerId !== "all") {
+      conditions.push(eq(registrations.centerId, Number.parseInt(centerId)))
+    }    // Add school filter 
+    if (schoolId && schoolId !== "all") {
+      if (schoolId.startsWith("manual_")) {
+        // Handle manual school names
+        const schoolName = schoolId.replace("manual_", "")
+        conditions.push(eq(registrations.schoolName, schoolName))
+      } else {
+        // Handle regular school IDs
+        conditions.push(eq(registrations.schoolId, Number.parseInt(schoolId)))
+      }
+    }
+    
+    // Add payment status filter
+    if (paymentStatus && paymentStatus !== "all") {
+      conditions.push(eq(registrations.paymentStatus, paymentStatus as "pending" | "completed"))
+    }
+
+    const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0]
+
+    // Determine sort order
+    let orderBy
+    const { asc } = await import("drizzle-orm")
+    
+    switch (sortBy) {
+      case "oldest":
+        orderBy = [asc(registrations.createdAt)]
+        break
+      case "name":
+        orderBy = [asc(registrations.firstName), asc(registrations.lastName)]
+        break
+      case "regnum":
+        orderBy = [asc(registrations.registrationNumber)]
+        break
+      case "newest":
+      default:
+        orderBy = [desc(registrations.createdAt)]
+        break
+    }
+
+    if (isExport) {      // For export, get all matching records without pagination
+      const allRegistrations = await db.query.registrations.findMany({
+        where: whereClause,
+        orderBy,
+        with: {
+          chapter: true,
+          school: true,
+          center: true,
+        },
+      })
+
+      // Convert to CSV format
+      const csvHeaders = [
+        "Registration Number",
+        "First Name", 
+        "Last Name",
+        "Chapter",
+        "School",
+        "Center", 
+        "Payment Status",
+        "Registration Date"
+      ]
+      
+      const csvRows = allRegistrations.map(reg => [
+        reg.registrationNumber,
+        reg.firstName,
+        reg.lastName,
+        reg.chapter?.name || "",
+        reg.school?.name || reg.schoolName || "",
+        reg.center?.name || "",
+        reg.paymentStatus,
+        new Date(reg.createdAt || new Date()).toLocaleDateString()
+      ])
+      
+      const csvContent = [csvHeaders, ...csvRows]
+        .map(row => row.map(field => `"${field}"`).join(","))
+        .join("\n")
+      
+      return new Response(csvContent, {
+        headers: {
+          "Content-Type": "text/csv",
+          "Content-Disposition": `attachment; filename="coordinator-registrations-${new Date().toISOString().slice(0, 10)}.csv"`,
+        },
+      })
+    }
+
+    // Get total count for pagination
+    const { count } = await import("drizzle-orm")
+    const totalResult = await db.select({ count: count() }).from(registrations).where(whereClause)
+    const total = totalResult[0]?.count || 0    // Get paginated registrations
     const coordinatorRegistrations = await db.query.registrations.findMany({
       limit,
-      where: eq(registrations.coordinatorRegisteredBy, coordinatorId),
-      orderBy: [desc(registrations.createdAt)],
+      offset,
+      where: whereClause,
+      orderBy,
       with: {
         chapter: true,
         school: true,
         center: true,
       },
-    })
-
-    // Get current slot balance
+    })    // Get current slot balance
     const slotBalance = await getRealtimeSlotBalance(coordinatorId)
 
     return NextResponse.json({
       registrations: coordinatorRegistrations,
       slotBalance: slotBalance.success ? slotBalance : null,
-      total: coordinatorRegistrations.length
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
     })
   } catch (error) {
     console.error("Error fetching coordinator registrations:", error)
