@@ -40,7 +40,7 @@ export function AdminStats({
   const revenueGrowth = -2
   
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card className="overflow-hidden border-t-4 border-t-blue-500">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Total Registrations</CardTitle>
@@ -111,26 +111,43 @@ export function AdminStats({
       
       <Card className="overflow-hidden border-t-4 border-t-purple-500">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Chapters & Schools</CardTitle>
+          <CardTitle className="text-sm font-medium">Chapters</CardTitle>
           <div className="rounded-full bg-purple-100 p-2 dark:bg-purple-900/30">
             <Building className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Chapters</div>
-              <div className="text-2xl font-bold">{totalChapters}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Schools</div>
-              <div className="text-2xl font-bold">{totalSchools}</div>
-            </div>
+          <div className="text-3xl font-bold">{totalChapters}</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Active chapters nationwide
           </div>
           <div className="mt-3 flex gap-2 text-xs text-muted-foreground">
             <div className="flex gap-1 items-center">
-              <Map className="h-3 w-3" />
-              <span>Average {Math.round(totalSchools / (totalChapters || 1))} schools per chapter</span>
+              <School className="h-3 w-3" />
+              <span>{totalSchools} schools registered</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="overflow-hidden border-t-4 border-t-orange-500">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Average Performance</CardTitle>
+          <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30">
+            <School className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold">
+            {totalChapters > 0 ? Math.round(totalRegistrations / totalChapters) : 0}
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Registrations per chapter
+          </div>
+          <div className="mt-3 flex gap-2 text-xs text-muted-foreground">
+            <div className="flex gap-1 items-center">
+              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+              <span>{totalChapters > 0 ? Math.round(totalSchools / totalChapters) : 0} schools per chapter</span>
             </div>
           </div>
         </CardContent>

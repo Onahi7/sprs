@@ -38,6 +38,11 @@ const navItems = [
 		icon: Users,
 	},
 	{
+		title: "Facilitators",
+		href: "/admin/facilitators",
+		icon: Users,
+	},
+	{
 		title: "Reports",
 		href: "/admin/reports",
 		icon: BarChart3,

@@ -21,10 +21,12 @@ import {
   Clock,
   BarChart3,
   Database,
-  Code
+  Code,
+  MapPin
 } from "lucide-react"
 import { SqlImport } from "./sql-import"
 import { PurchasesTable } from './purchases-table'
+import { RegistrationsByChapter } from './registrations-by-chapter'
 
 export function AdminDashboard() {
   const { toast } = useToast()
@@ -228,10 +230,14 @@ export function AdminDashboard() {
         totalChapters={stats?.totalChapters}
         totalSchools={stats?.totalSchools}
       />
-        <Tabs defaultValue="overview" className="space-y-4">        <TabsList className="grid grid-cols-6 md:w-auto w-full">
+        <Tabs defaultValue="overview" className="space-y-4">        <TabsList className="grid grid-cols-7 md:w-auto w-full">
           <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
+          </TabsTrigger>
+          <TabsTrigger value="chapters" onClick={() => setActiveTab("chapters")}>
+            <MapPin className="h-4 w-4 mr-2" />
+            Chapters
           </TabsTrigger>
           <TabsTrigger value="registrations" onClick={() => setActiveTab("registrations")}>
             <TrendingUp className="h-4 w-4 mr-2" />
@@ -254,8 +260,7 @@ export function AdminDashboard() {
             Data Import
           </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
@@ -307,10 +312,18 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Registrations by Chapter */}
+          <RegistrationsByChapter />
+          
           {/* Recent Slot Purchases Table */}
           <h2 className="text-xl font-semibold mt-6">Recent Slot Purchases</h2>
-          <PurchasesTable />
+          <PurchasesTable />        </TabsContent>
+        
+        <TabsContent value="chapters" className="space-y-4">
+          <RegistrationsByChapter />
         </TabsContent>
+        
         <TabsContent value="registrations" className="space-y-4">
           <Card>
             <CardHeader>

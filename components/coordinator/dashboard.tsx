@@ -10,6 +10,7 @@ import { RegistrationChart } from "./registration-chart"
 import { RegistrationsTable } from "./registrations-table"
 import { SplitTransactions } from "./split-transactions"
 import { SlotBalanceDisplay } from "./slot-balance-display"
+import { FacilitatorsManagement } from "./facilitators-management"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -23,7 +24,8 @@ import {
   User,
   AlertCircle,
   CreditCard,
-  UserPlus
+  UserPlus,
+  Users
 } from "lucide-react"
 
 export function CoordinatorDashboard() {  const { toast } = useToast()
@@ -153,7 +155,7 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
             <span>{formattedDate}</span>
           </div>
         </div>
-          <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button 
             asChild
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
@@ -161,6 +163,15 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
             <Link href="/coordinator/register">
               <UserPlus className="mr-2 h-4 w-4" />
               Register Student
+            </Link>
+          </Button>
+          <Button 
+            asChild
+            className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600"
+          >
+            <Link href="/coordinator/facilitators">
+              <Users className="mr-2 h-4 w-4" />
+              Facilitators
             </Link>
           </Button>
           <Button 
@@ -285,6 +296,10 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
             <TrendingUp className="h-4 w-4 mr-2" />
             Analytics
           </TabsTrigger>
+          <TabsTrigger value="facilitators" onClick={() => setActiveTab("facilitators")}>
+            <User className="h-4 w-4 mr-2" />
+            Facilitators
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
@@ -360,6 +375,9 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
               <RegistrationChart chapterId={chapterId || 0} />
             </CardContent>
           </Card>
+        </TabsContent>
+          <TabsContent value="facilitators" className="space-y-4">
+          <FacilitatorsManagement />
         </TabsContent>
       </Tabs>
     </div>
