@@ -38,8 +38,8 @@ const navItems = [
 		icon: Users,
 	},
 	{
-		title: "Facilitators",
-		href: "/admin/facilitators",
+		title: "Supervisors",
+		href: "/admin/supervisors",
 		icon: Users,
 	},
 	{

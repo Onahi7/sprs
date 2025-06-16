@@ -11,9 +11,15 @@ async function populateSlotPackages() {
   const db = getDbConnection()
   
   console.log('🎯 Setting up slot packages...')
-  
-  // Create slot packages
+    // Create slot packages
   const packages = await db.insert(slotPackages).values([
+    {
+      name: '10 Slots Package',
+      slotCount: 10,
+      price: '12000.00', // ₦12,000
+      description: 'Perfect for small-scale registration - Register up to 10 students',
+      isActive: true,
+    },
     {
       name: '50 Slots Package',
       slotCount: 50,
@@ -26,6 +32,13 @@ async function populateSlotPackages() {
       slotCount: 100,
       price: '95000.00', // ₦95,000 (5% discount)
       description: 'Register up to 100 students at once - Best Value!',
+      isActive: true,
+    },
+    {
+      name: '200 Slots Package',
+      slotCount: 200,
+      price: '180000.00', // ₦180,000 (10% discount from 200k)
+      description: 'Bulk registration package - Register up to 200 students with maximum savings',
       isActive: true,
     }
   ]).returning()

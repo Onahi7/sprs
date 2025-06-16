@@ -145,13 +145,13 @@ export const registrations = pgTable("registrations", {
   createdAt: timestamp("created_at").defaultNow(),
 })
 
-// Facilitators model
-export const facilitators = pgTable("facilitators", {
+// Supervisors model
+export const supervisors = pgTable("supervisors", {
   id: serial("id").primaryKey(),
   chapterId: integer("chapter_id").references(() => chapters.id),
+  centerId: integer("center_id").references(() => centers.id),
   name: text("name").notNull(),
   phoneNumber: text("phone_number").notNull(),
-  position: integer("position").notNull(), // 1 or 2 (for the two facilitators per chapter)
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -210,7 +210,7 @@ export const chaptersRelations = relations(chapters, ({ many }) => ({
   splitCodes: many(chapterSplitCodes),
   slotPurchases: many(slotPurchases),
   coordinatorSlots: many(coordinatorSlots),
-  facilitators: many(facilitators),
+  supervisors: many(supervisors),
 }))
 
 export const schoolsRelations = relations(schools, ({ one, many }) => ({
@@ -227,6 +227,7 @@ export const centersRelations = relations(centers, ({ one, many }) => ({
     references: [chapters.id],
   }),
   registrations: many(registrations),
+  supervisors: many(supervisors),
 }))
 
 export const chapterCoordinatorsRelations = relations(chapterCoordinators, ({ one, many }) => ({
@@ -314,10 +315,14 @@ export const registrationsRelations = relations(registrations, ({ one, many }) =
   slotUsageHistory: many(slotUsageHistory),
 }))
 
-export const facilitatorsRelations = relations(facilitators, ({ one }) => ({
+export const supervisorsRelations = relations(supervisors, ({ one }) => ({
   chapter: one(chapters, {
-    fields: [facilitators.chapterId],
+    fields: [supervisors.chapterId],
     references: [chapters.id],
+  }),
+  center: one(centers, {
+    fields: [supervisors.centerId],
+    references: [centers.id],
   }),
 }))
 

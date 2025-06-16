@@ -116,9 +116,7 @@ export function SlotPurchaseCard({
               ₦{pricePerSlot} per slot
             </div>
           </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
+        </CardHeader>        <CardContent className="space-y-4">
           <div className="text-center">
             <div className="text-2xl font-semibold text-blue-600">
               {pkg.slotCount} Slots
@@ -126,6 +124,14 @@ export function SlotPurchaseCard({
             <p className="text-sm text-muted-foreground">
               Register up to {pkg.slotCount} students
             </p>
+            {/* Show savings for larger packages */}
+            {pkg.slotCount >= 100 && (
+              <div className="mt-2">
+                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                  {pkg.slotCount === 100 ? "5% savings" : pkg.slotCount === 200 ? "10% savings" : "Best value"}
+                </Badge>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -145,6 +151,13 @@ export function SlotPurchaseCard({
               <Check className="w-4 h-4 text-green-500" />
               <span>Usage tracking & analytics</span>
             </div>
+            {/* Special features for larger packages */}
+            {pkg.slotCount >= 200 && (
+              <div className="flex items-center gap-2 text-sm">
+                <Zap className="w-4 h-4 text-yellow-500" />
+                <span>Priority support</span>
+              </div>
+            )}
           </div>
         </CardContent>
 

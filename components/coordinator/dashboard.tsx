@@ -10,7 +10,6 @@ import { RegistrationChart } from "./registration-chart"
 import { RegistrationsTable } from "./registrations-table"
 import { SplitTransactions } from "./split-transactions"
 import { SlotBalanceDisplay } from "./slot-balance-display"
-import { FacilitatorsManagement } from "./facilitators-management"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -168,10 +167,9 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
           <Button 
             asChild
             className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600"
-          >
-            <Link href="/coordinator/facilitators">
+          >            <Link href="/coordinator/supervisors">
               <Users className="mr-2 h-4 w-4" />
-              Facilitators
+              Supervisors
             </Link>
           </Button>
           <Button 
@@ -279,7 +277,7 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
         <SlotBalanceDisplay slots={slotData} loading={loading} />
       </div>
         <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-4 md:w-auto w-full">
+        <TabsList className="grid grid-cols-5 md:w-auto w-full">
           <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
@@ -291,14 +289,13 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
           <TabsTrigger value="split-payments" onClick={() => setActiveTab("split-payments")}>
             <CreditCard className="h-4 w-4 mr-2" />
             Split Payments
-          </TabsTrigger>
-          <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")}>
+          </TabsTrigger>          <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")}>
             <TrendingUp className="h-4 w-4 mr-2" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="facilitators" onClick={() => setActiveTab("facilitators")}>
+          <TabsTrigger value="supervisors" onClick={() => setActiveTab("supervisors")}>
             <User className="h-4 w-4 mr-2" />
-            Facilitators
+            Supervisors
           </TabsTrigger>
         </TabsList>
         
@@ -363,21 +360,32 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
         <TabsContent value="split-payments" className="space-y-4">
           <SplitTransactions chapterId={chapterId || 0} />
         </TabsContent>
-        
-        <TabsContent value="analytics" className="space-y-4">
+          <TabsContent value="analytics" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Registration Analytics</CardTitle>
               <CardDescription>
                 View detailed registration trends over time
               </CardDescription>
-            </CardHeader>            <CardContent>
+            </CardHeader>
+            <CardContent>
               <RegistrationChart chapterId={chapterId || 0} />
             </CardContent>
           </Card>
         </TabsContent>
-          <TabsContent value="facilitators" className="space-y-4">
-          <FacilitatorsManagement />
+          <TabsContent value="supervisors" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Supervisors Management</CardTitle>
+              <CardDescription>Manage supervisors for your centers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <p>Supervisors management is being loaded...</p>
+                <p className="text-sm text-gray-500">Please refresh the page if this doesn't load.</p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

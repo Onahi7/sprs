@@ -19,12 +19,11 @@ const navItems = [
 		href: "/coordinator/register",
 		icon: UserPlus,
 		featured: true, // Mark as featured for special styling
-	},
-	{
-		title: "Facilitators",
-		href: "/coordinator/facilitators",
-		icon: Users,
-	},
+	},  {
+    title: "Supervisors",
+    href: "/coordinator/supervisors",
+    icon: Users,
+  },
 	{
 		title: "Slots",
 		href: "/coordinator/slots",

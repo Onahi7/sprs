@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getDbConnection } from "@/db"
-import { facilitators } from "@/db/schema"
+import { supervisors, centers } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { getSession } from "@/lib/auth"
 
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     
     let result
     
-    // For coordinators, only show their chapter's facilitators
+    // For coordinators, only show their chapter's supervisors
     if (session.role === "coordinator") {
       if (!session.chapterId) {
         return new NextResponse(JSON.stringify({
@@ -35,22 +35,56 @@ export async function GET(request: Request) {
         })
       }
       
-      result = await db.select().from(facilitators)
-        .where(eq(facilitators.chapterId, session.chapterId))
+      result = await db.select({
+        id: supervisors.id,
+        chapterId: supervisors.chapterId,
+        centerId: supervisors.centerId,
+        name: supervisors.name,
+        phoneNumber: supervisors.phoneNumber,
+        isActive: supervisors.isActive,
+        createdAt: supervisors.createdAt,
+        updatedAt: supervisors.updatedAt,
+        centerName: centers.name,
+      }).from(supervisors)
+        .leftJoin(centers, eq(supervisors.centerId, centers.id))
+        .where(eq(supervisors.chapterId, session.chapterId))
         .execute()
     } else if (chapterId && session.role === "admin") {
-      result = await db.select().from(facilitators)
-        .where(eq(facilitators.chapterId, parseInt(chapterId)))
+      result = await db.select({
+        id: supervisors.id,
+        chapterId: supervisors.chapterId,
+        centerId: supervisors.centerId,
+        name: supervisors.name,
+        phoneNumber: supervisors.phoneNumber,
+        isActive: supervisors.isActive,
+        createdAt: supervisors.createdAt,
+        updatedAt: supervisors.updatedAt,
+        centerName: centers.name,
+      }).from(supervisors)
+        .leftJoin(centers, eq(supervisors.centerId, centers.id))
+        .where(eq(supervisors.chapterId, parseInt(chapterId)))
         .execute()
     } else {
-      result = await db.select().from(facilitators).execute()
+      result = await db.select({
+        id: supervisors.id,
+        chapterId: supervisors.chapterId,
+        centerId: supervisors.centerId,
+        name: supervisors.name,
+        phoneNumber: supervisors.phoneNumber,
+        isActive: supervisors.isActive,
+        createdAt: supervisors.createdAt,
+        updatedAt: supervisors.updatedAt,
+        centerName: centers.name,
+      }).from(supervisors)
+        .leftJoin(centers, eq(supervisors.centerId, centers.id))
+        .execute()
     }
     
-    return NextResponse.json({ facilitators: result })
+    return NextResponse.json({ supervisors: result })
   } catch (error) {
     console.error("Database error:", error)
     return new NextResponse(JSON.stringify({
-      error: "Failed to fetch facilitators"
+      error: "Failed to fetch supervisors"
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
@@ -70,10 +104,20 @@ export async function POST(request: Request) {
     })
   }
 
+  if (!session.chapterId) {
+    return new NextResponse(JSON.stringify({
+      error: "Coordinator must have a chapter ID"
+    }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
   try {
     const body = await request.json()
-    const { name, phoneNumber, position } = body
-      if (!name || !phoneNumber || !position || !session.chapterId) {
+    const { name, phoneNumber, centerId } = body
+    
+    if (!name || !phoneNumber || !centerId || !session.chapterId) {
       return new NextResponse(JSON.stringify({
         error: "Missing required fields"
       }), {
@@ -82,49 +126,39 @@ export async function POST(request: Request) {
       })
     }
 
-    if (![1, 2].includes(position)) {
-      return new NextResponse(JSON.stringify({
-        error: "Position must be 1 or 2"
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      })
-    }
-
     const db = getDbConnection()
     
-    // Check if position is already taken for this chapter
+    // Check if supervisor already exists for this center
     const existing = await db.select()
-      .from(facilitators)
+      .from(supervisors)
       .where(and(
-        eq(facilitators.chapterId, session.chapterId),
-        eq(facilitators.position, position),
-        eq(facilitators.isActive, true)
+        eq(supervisors.centerId, centerId),
+        eq(supervisors.isActive, true)
       ))
       .execute()
     
     if (existing.length > 0) {
       return new NextResponse(JSON.stringify({
-        error: `Position ${position} is already filled for this chapter`
+        error: `A supervisor already exists for this center`
       }), {
         status: 400,
         headers: { "Content-Type": "application/json" }
       })
     }
     
-    const result = await db.insert(facilitators).values({
+    const result = await db.insert(supervisors).values({
       chapterId: session.chapterId,
+      centerId,
       name,
       phoneNumber,
-      position,
       isActive: true
     }).returning().execute()
     
-    return NextResponse.json({ facilitator: result[0] })
+    return NextResponse.json({ supervisor: result[0] })
   } catch (error) {
     console.error("Database error:", error)
     return new NextResponse(JSON.stringify({
-      error: "Failed to create facilitator"
+      error: "Failed to create supervisor"
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
@@ -168,33 +202,33 @@ export async function PUT(request: Request) {
 
     const db = getDbConnection()
     
-    const result = await db.update(facilitators)
+    const result = await db.update(supervisors)
       .set({ 
         name, 
         phoneNumber,
         updatedAt: new Date()
       })
       .where(and(
-        eq(facilitators.id, id),
-        eq(facilitators.chapterId, session.chapterId)
+        eq(supervisors.id, id),
+        eq(supervisors.chapterId, session.chapterId)
       ))
       .returning()
       .execute()
     
     if (result.length === 0) {
       return new NextResponse(JSON.stringify({
-        error: "Facilitator not found or not authorized"
+        error: "Supervisor not found or not authorized"
       }), {
         status: 404,
         headers: { "Content-Type": "application/json" }
       })
     }
     
-    return NextResponse.json({ facilitator: result[0] })
+    return NextResponse.json({ supervisor: result[0] })
   } catch (error) {
     console.error("Database error:", error)
     return new NextResponse(JSON.stringify({
-      error: "Failed to update facilitator"
+      error: "Failed to update supervisor"
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
@@ -228,7 +262,7 @@ export async function DELETE(request: Request) {
   
   if (!id) {
     return new NextResponse(JSON.stringify({
-      error: "Missing facilitator ID"
+      error: "Missing supervisor ID"
     }), {
       status: 400,
       headers: { "Content-Type": "application/json" }
@@ -238,21 +272,21 @@ export async function DELETE(request: Request) {
   try {
     const db = getDbConnection()
     
-    const result = await db.update(facilitators)
+    const result = await db.update(supervisors)
       .set({ 
         isActive: false,
         updatedAt: new Date()
       })
       .where(and(
-        eq(facilitators.id, parseInt(id)),
-        eq(facilitators.chapterId, session.chapterId)
+        eq(supervisors.id, parseInt(id)),
+        eq(supervisors.chapterId, session.chapterId)
       ))
       .returning()
       .execute()
     
     if (result.length === 0) {
       return new NextResponse(JSON.stringify({
-        error: "Facilitator not found or not authorized"
+        error: "Supervisor not found or not authorized"
       }), {
         status: 404,
         headers: { "Content-Type": "application/json" }
@@ -263,7 +297,7 @@ export async function DELETE(request: Request) {
   } catch (error) {
     console.error("Database error:", error)
     return new NextResponse(JSON.stringify({
-      error: "Failed to delete facilitator"
+      error: "Failed to delete supervisor"
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" }

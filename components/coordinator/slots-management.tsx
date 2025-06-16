@@ -296,14 +296,13 @@ export function SlotsManagement() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          ) : packages.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2">
+            </div>          ) : packages.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {packages.map((pkg, index) => (
                 <SlotPurchaseCard
                   key={pkg.id}
                   package={pkg}
-                  isPopular={index === 1} // Mark 100-slot package as popular
+                  isPopular={pkg.slotCount === 100} // Mark 100-slot package as popular
                   onPurchase={handlePurchase}
                   disabled={!pkg.splitCode}
                 />
