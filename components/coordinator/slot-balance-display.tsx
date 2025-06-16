@@ -17,10 +17,9 @@ interface SlotBalanceDisplayProps {
   className?: string
 }
 
-export function SlotBalanceDisplay({ slots, loading, className }: SlotBalanceDisplayProps) {
-  if (loading) {
+export function SlotBalanceDisplay({ slots, loading, className }: SlotBalanceDisplayProps) {  if (loading) {
     return (
-      <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 ${className}`}>
+      <div className={`grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${className}`}>
         {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -47,9 +46,8 @@ export function SlotBalanceDisplay({ slots, loading, className }: SlotBalanceDis
 
   const isLowBalance = slots.availableSlots <= 5
   const isOutOfSlots = slots.availableSlots === 0
-
   return (
-    <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 ${className}`}>
+    <div className={`grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${className}`}>
       {/* Available Slots */}
       <Card className={isOutOfSlots ? "border-red-200 bg-red-50" : isLowBalance ? "border-yellow-200 bg-yellow-50" : ""}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

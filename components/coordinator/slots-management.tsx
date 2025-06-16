@@ -279,7 +279,7 @@ export function SlotsManagement() {
           </div>
 
           {loading ? (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
               {[1, 2].map((i) => (
                 <Card key={i}>
                   <CardHeader>
@@ -297,7 +297,7 @@ export function SlotsManagement() {
                 </Card>
               ))}
             </div>          ) : packages.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {packages.map((pkg, index) => (
                 <SlotPurchaseCard
                   key={pkg.id}

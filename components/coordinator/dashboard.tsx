@@ -143,18 +143,18 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
   const formattedDate = today.toLocaleDateString('en-US', dateOptions)
   
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:justify-between md:items-center">
-        <div>
+    <div className="space-y-6">      <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:justify-between md:items-center">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">{stats?.chapterName || "Chapter"} Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">{stats?.chapterName || "Chapter"} Dashboard</h1>
           </div>
           <div className="flex items-center text-muted-foreground mt-1">
-            <Calendar className="mr-1 h-4 w-4" />
-            <span>{formattedDate}</span>
+            <Calendar className="mr-1 h-4 w-4 flex-shrink-0" />
+            <span className="text-sm">{formattedDate}</span>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">          <Button 
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button 
             asChild
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
           >
@@ -187,18 +187,16 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
         <p className="text-sm text-blue-800 dark:text-blue-300">
           Welcome, <span className="font-medium">{coordinator?.name || "Coordinator"}</span>
         </p>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      </div>      {/* Quick Actions */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-green-800 dark:text-green-300">Register New Student</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-green-800 dark:text-green-300 truncate">Register New Student</h3>
                 <p className="text-sm text-green-600 dark:text-green-400">Use your slot balance to register candidates</p>
               </div>
-              <Button size="sm" asChild className="bg-green-600 hover:bg-green-700">
+              <Button size="sm" asChild className="bg-green-600 hover:bg-green-700 ml-2 flex-shrink-0">
                 <Link href="/coordinator/register">
                   <UserPlus className="h-4 w-4" />
                 </Link>
@@ -210,11 +208,11 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
         <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/30 dark:border-purple-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-purple-800 dark:text-purple-300">Manage Slots</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-purple-800 dark:text-purple-300 truncate">Manage Slots</h3>
                 <p className="text-sm text-purple-600 dark:text-purple-400">Purchase slots and view balance</p>
               </div>
-              <Button size="sm" variant="outline" asChild>
+              <Button size="sm" variant="outline" asChild className="ml-2 flex-shrink-0">
                 <Link href="/coordinator/slots">
                   <CreditCard className="h-4 w-4" />
                 </Link>
@@ -223,14 +221,14 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800">
+        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 sm:col-span-2 lg:col-span-1">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-orange-800 dark:text-orange-300">View Registrations</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-orange-800 dark:text-orange-300 truncate">View Registrations</h3>
                 <p className="text-sm text-orange-600 dark:text-orange-400">Track all student registrations</p>
               </div>
-              <Button size="sm" variant="outline" asChild>
+              <Button size="sm" variant="outline" asChild className="ml-2 flex-shrink-0">
                 <Link href="/coordinator/registrations">
                   <ListFilter className="h-4 w-4" />
                 </Link>
@@ -278,33 +276,34 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
           </div>        </div>
         <SlotBalanceDisplay slots={slotData} loading={loading} />
       </div>
-      
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-5 md:w-auto w-full">
-          <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Overview
+        <Tabs defaultValue="overview" className="space-y-4">        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full gap-1 h-auto p-1">
+          <TabsTrigger value="overview" onClick={() => setActiveTab("overview")} className="flex-col h-12 md:h-10 md:flex-row text-xs md:text-sm">
+            <BarChart3 className="h-4 w-4 md:mr-2" />
+            <span className="md:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="registrations" onClick={() => setActiveTab("registrations")}>
-            <ListFilter className="h-4 w-4 mr-2" />
-            Registrations
-          </TabsTrigger>          <TabsTrigger value="split-payments" onClick={() => setActiveTab("split-payments")}>
-            <CreditCard className="h-4 w-4 mr-2" />
-            Split Payments
+          <TabsTrigger value="registrations" onClick={() => setActiveTab("registrations")} className="flex-col h-12 md:h-10 md:flex-row text-xs md:text-sm">
+            <ListFilter className="h-4 w-4 md:mr-2" />
+            <span className="md:inline">Registrations</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")}>
-            <TrendingUp className="h-4 w-4 mr-2" />
-            Analytics
+          <TabsTrigger value="split-payments" onClick={() => setActiveTab("split-payments")} className="flex-col h-12 md:h-10 md:flex-row text-xs md:text-sm">
+            <CreditCard className="h-4 w-4 md:mr-2" />
+            <span className="hidden sm:inline md:inline">Split Payments</span>
+            <span className="sm:hidden">Payments</span>
           </TabsTrigger>
-          <TabsTrigger value="supervisors" onClick={() => setActiveTab("supervisors")}>
-            <User className="h-4 w-4 mr-2" />
-            Supervisors
+          <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="flex-col h-12 md:h-10 md:flex-row text-xs md:text-sm">
+            <TrendingUp className="h-4 w-4 md:mr-2" />
+            <span className="md:inline">Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="supervisors" onClick={() => setActiveTab("supervisors")} className="flex-col h-12 md:h-10 md:flex-row text-xs md:text-sm">
+            <User className="h-4 w-4 md:mr-2" />
+            <span className="md:inline">Supervisors</span>
           </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">              <CardHeader>
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+            <Card className="lg:col-span-4">
+              <CardHeader>
                 <CardTitle>Registration Trends</CardTitle>
                 <CardDescription>Daily registration and payment counts</CardDescription>
               </CardHeader>
@@ -312,8 +311,7 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
                 <RegistrationChart chapterId={chapterId || 0} />
               </CardContent>
             </Card>
-            
-            <Card className="col-span-3">
+              <Card className="lg:col-span-3">
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>Latest registrations from your chapter</CardDescription>

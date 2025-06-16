@@ -37,7 +37,7 @@ export function RegistrationStats({
   const schoolsGrowth = 4 // 4% growth from previous period
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       <Card className="overflow-hidden border-t-4 border-t-blue-500">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Total Registrations</CardTitle>

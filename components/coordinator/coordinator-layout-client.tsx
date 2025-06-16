@@ -19,9 +19,8 @@ export function CoordinatorLayoutClient({ children }: { children: ReactNode }) {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      
-      {/* Main Content */}
-      <div className="flex-1 md:p-8 p-4 pt-20 md:pt-8">
+        {/* Main Content */}
+      <div className="flex-1 md:p-8 p-3 pt-20 md:pt-8">
         {children}
       </div>
     </div>
