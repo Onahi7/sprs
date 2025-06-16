@@ -154,8 +154,7 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
             <span>{formattedDate}</span>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button 
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">          <Button 
             asChild
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
           >
@@ -167,7 +166,8 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
           <Button 
             asChild
             className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600"
-          >            <Link href="/coordinator/supervisors">
+          >
+            <Link href="/coordinator/supervisors">
               <Users className="mr-2 h-4 w-4" />
               Supervisors
             </Link>
@@ -248,14 +248,17 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
               <span className="font-medium">{stats.pendingPayments}</span> {stats.pendingPayments === 1 ? 'registration' : 'registrations'} with pending payment
             </p>
           </CardContent>
-        </Card>
-      )}        <RegistrationStats 
+        </Card>      )}
+      
+      <RegistrationStats 
         totalRegistrations={stats?.totalRegistrations} 
         pendingPayments={stats?.pendingPayments}
         confirmedRegistrations={stats?.confirmedRegistrations}
         totalSchools={stats?.totalSchools}
         totalCenters={stats?.totalCenters}
-      />      {/* Slot Balance Section */}
+      />
+      
+      {/* Slot Balance Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Slot Balance</h2>
@@ -272,11 +275,11 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
                 Manage Slots
               </Link>
             </Button>
-          </div>
-        </div>
+          </div>        </div>
         <SlotBalanceDisplay slots={slotData} loading={loading} />
       </div>
-        <Tabs defaultValue="overview" className="space-y-4">
+      
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid grid-cols-5 md:w-auto w-full">
           <TabsTrigger value="overview" onClick={() => setActiveTab("overview")}>
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -285,11 +288,11 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
           <TabsTrigger value="registrations" onClick={() => setActiveTab("registrations")}>
             <ListFilter className="h-4 w-4 mr-2" />
             Registrations
-          </TabsTrigger>
-          <TabsTrigger value="split-payments" onClick={() => setActiveTab("split-payments")}>
+          </TabsTrigger>          <TabsTrigger value="split-payments" onClick={() => setActiveTab("split-payments")}>
             <CreditCard className="h-4 w-4 mr-2" />
             Split Payments
-          </TabsTrigger>          <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")}>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")}>
             <TrendingUp className="h-4 w-4 mr-2" />
             Analytics
           </TabsTrigger>
@@ -301,11 +304,11 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
         
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
-              <CardHeader>
+            <Card className="col-span-4">              <CardHeader>
                 <CardTitle>Registration Trends</CardTitle>
                 <CardDescription>Daily registration and payment counts</CardDescription>
-              </CardHeader>              <CardContent className="px-2">
+              </CardHeader>
+              <CardContent className="px-2">
                 <RegistrationChart chapterId={chapterId || 0} />
               </CardContent>
             </Card>
@@ -314,7 +317,8 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>Latest registrations from your chapter</CardDescription>
-              </CardHeader>              <CardContent>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
                   {recentActivity.length === 0 ? (
                     <div className="text-center py-4 text-muted-foreground">
@@ -342,25 +346,26 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
-          <TabsContent value="registrations" className="space-y-4">
+          </div>        </TabsContent>
+        
+        <TabsContent value="registrations" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>All Registrations</CardTitle>
               <CardDescription>
                 Manage and view all registrations from your chapter
               </CardDescription>
-            </CardHeader>            <CardContent>
+            </CardHeader>
+            <CardContent>
               <RegistrationsTable chapterId={chapterId || 0} />
             </CardContent>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="split-payments" className="space-y-4">
+          <TabsContent value="split-payments" className="space-y-4">
           <SplitTransactions chapterId={chapterId || 0} />
         </TabsContent>
-          <TabsContent value="analytics" className="space-y-4">
+        
+        <TabsContent value="analytics" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Registration Analytics</CardTitle>
@@ -373,7 +378,8 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
             </CardContent>
           </Card>
         </TabsContent>
-          <TabsContent value="supervisors" className="space-y-4">
+        
+        <TabsContent value="supervisors" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Supervisors Management</CardTitle>
