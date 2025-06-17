@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Cog, X } from 'lucide-react';
 
 export function DevTools() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isProduction, setIsProduction] = useState(true);
   
-  if (process.env.NODE_ENV === 'production') {
+  useEffect(() => {
+    setIsProduction(process.env.NODE_ENV === 'production');
+  }, []);
+  
+  if (isProduction) {
     return null;
   }
   

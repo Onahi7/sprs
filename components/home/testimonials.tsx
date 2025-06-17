@@ -17,8 +17,15 @@ type Testimonial = {
 export function Testimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     const fetchTestimonials = async () => {
       try {
         const response = await fetch("/api/testimonials")
@@ -35,7 +42,38 @@ export function Testimonials() {
     }
 
     fetchTestimonials()
-  }, [])
+  }, [mounted])
+
+  if (!mounted) {
+    return (
+      <section id="testimonials" className="py-16 md:py-24 bg-muted/50">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+            <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Testimonials</div>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">What Our Users Say</h2>
+            <p className="max-w-[700px] text-muted-foreground md:text-xl">
+              Hear from students and coordinators who have used our registration system
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index}>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-8 w-8" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-4 w-full" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   if (loading) {
     return (

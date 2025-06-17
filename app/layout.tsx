@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { DevTools } from "@/components/dev-tools"
+import { NoSSR } from "@/components/shared/no-ssr"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -25,9 +26,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="light" 
+          enableSystem 
+          disableTransitionOnChange
+          storageKey="napps-theme"
+        >
           {children}
-          <DevTools />
+          <NoSSR>
+            <DevTools />
+          </NoSSR>
           <Toaster />
         </ThemeProvider>
       </body>

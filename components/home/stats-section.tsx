@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookOpen, CheckCircle, MapPin, Users } from "lucide-react"
+import { LoadingStats } from "@/components/shared/loading"
 import { Skeleton } from "@/components/ui/skeleton"
 
 type StatsData = {
@@ -15,8 +16,15 @@ type StatsData = {
 export function StatsSection() {
   const [stats, setStats] = useState<StatsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
     const fetchStats = async () => {
       try {
         const response = await fetch("/api/stats")
@@ -25,13 +33,30 @@ export function StatsSection() {
         setStats(data)
       } catch (error) {
         console.error("Error fetching stats:", error)
+        // Set default fallback data
+        setStats({
+          totalRegistrations: 0,
+          totalChapters: 0,
+          totalSchools: 0,
+          completionRate: 0
+        })
       } finally {
         setLoading(false)
       }
     }
 
     fetchStats()
-  }, [])
+  }, [mounted])
+
+  if (!mounted || loading) {
+    return (
+      <section className="py-12 md:py-16 bg-white dark:bg-gray-950 w-full">
+        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 mx-auto">
+          <LoadingStats />
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-12 md:py-16 bg-white dark:bg-gray-950 w-full">
