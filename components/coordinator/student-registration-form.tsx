@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Upload, User, School, Users, Phone, Mail, AlertCircle, CheckCircle, Camera, X, RefreshCw, RotateCcw } from "lucide-react"
+import { DuplicateConfirmationDialog } from "./duplicate-confirmation-dialog"
 
 interface Chapter {
   id: number
@@ -65,7 +66,18 @@ export function CoordinatorStudentRegistrationForm() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
-    // Camera-related state for passport upload
+  
+  // Duplicate detection states
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false)
+  const [duplicateData, setDuplicateData] = useState<{
+    hasDuplicates: boolean
+    duplicates: any[]
+    message: string
+  } | null>(null)
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+  const [duplicateConfirmed, setDuplicateConfirmed] = useState(false)
+  
+  // Camera-related state for passport upload
   const [activeTab, setActiveTab] = useState<string>("upload")
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [isCameraAvailable, setIsCameraAvailable] = useState(false)
@@ -153,6 +165,43 @@ export function CoordinatorStudentRegistrationForm() {
       return false
     } finally {
       setValidatingSlots(false)
+    }  }
+
+  // Check for duplicate registrations
+  const checkForDuplicates = async () => {
+    if (!formData.firstName || !formData.lastName || !formData.chapterId) {
+      return { hasDuplicates: false }
+    }
+
+    try {
+      setCheckingDuplicates(true)
+      
+      const response = await fetch('/api/coordinator/check-duplicate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          middleName: formData.middleName || '',
+          chapterId: formData.chapterId
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        console.error('Duplicate check failed:', data.error)
+        return { hasDuplicates: false }
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error checking duplicates:', error)
+      return { hasDuplicates: false }
+    } finally {
+      setCheckingDuplicates(false)
     }
   }
 
@@ -282,14 +331,14 @@ export function CoordinatorStudentRegistrationForm() {
       case 2: // School info
         return !!(formData.chapterId && formData.centerId && (formData.schoolId || formData.schoolName))
       case 3: // Parent info
-        return !!(formData.parentFirstName && formData.parentLastName && 
-                 formData.parentPhone && formData.parentEmail && formData.parentConsent)
+        return !!(formData.parentFirstName && formData.parentLastName &&                 formData.parentPhone && formData.parentEmail && formData.parentConsent)
       case 4: // Passport
         return !!formData.passportUrl
       default:
         return false
     }
   }
+  
   const handleSubmit = async () => {
     if (!validateStep(4)) {
       toast({
@@ -311,15 +360,28 @@ export function CoordinatorStudentRegistrationForm() {
       return
     }
 
+    // Check for duplicates unless already confirmed
+    if (!duplicateConfirmed) {
+      const duplicateCheck = await checkForDuplicates()
+      
+      if (duplicateCheck.hasDuplicates) {
+        setDuplicateData(duplicateCheck)
+        setShowDuplicateDialog(true)
+        return // Stop here and show dialog
+      }
+    }
+
     try {
       setSubmitting(true)
-      
-      const response = await fetch('/api/coordinator/register', {
+        const response = await fetch('/api/coordinator/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          duplicateConfirmed
+        }),
       })
 
       const data = await response.json()
@@ -353,10 +415,23 @@ export function CoordinatorStudentRegistrationForm() {
         title: "Registration Failed",
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive"
-      })
-    } finally {
+      })    } finally {
       setSubmitting(false)
     }
+  }
+
+  // Handle duplicate confirmation
+  const handleDuplicateConfirm = () => {
+    setDuplicateConfirmed(true)
+    setShowDuplicateDialog(false)
+    // Re-trigger submission
+    handleSubmit()
+  }
+
+  const handleDuplicateCancel = () => {
+    setShowDuplicateDialog(false)
+    setDuplicateData(null)
+    setDuplicateConfirmed(false)
   }
 
   // Function to download registration slip
@@ -1081,9 +1156,21 @@ export function CoordinatorStudentRegistrationForm() {
             ) : (
               'Complete Registration'
             )}
-          </Button>
-        )}
+          </Button>        )}
       </div>
+
+      {/* Duplicate Confirmation Dialog */}
+      {showDuplicateDialog && duplicateData && (
+        <DuplicateConfirmationDialog
+          isOpen={showDuplicateDialog}
+          onClose={() => setShowDuplicateDialog(false)}
+          onConfirm={handleDuplicateConfirm}
+          onCancel={handleDuplicateCancel}
+          duplicates={duplicateData.duplicates}
+          studentName={`${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}`}
+          loading={submitting}
+        />
+      )}
     </div>
   )
 }

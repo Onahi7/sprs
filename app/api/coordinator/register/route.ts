@@ -58,6 +58,12 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
+    // Optional: Log if this registration was made after duplicate confirmation
+    const duplicateOverride = data.duplicateConfirmed === true
+    if (duplicateOverride) {
+      console.log(`🔄 Registration proceeding after duplicate confirmation for ${data.firstName} ${data.lastName} by coordinator ${coordinatorId}`)
+    }
+
     // Generate registration number - Format: NAPPS-XXXXXXYY (X=timestamp digits, Y=random letters)
     const registrationNumber = `NAPPS-${Date.now().toString().slice(-6)}${nanoid(2).toUpperCase()}`
 

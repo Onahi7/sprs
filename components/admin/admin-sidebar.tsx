@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { BarChart3, Home, Settings, Users, BookOpen, Map, Building2, FileText, Mail } from "lucide-react"
+import { BarChart3, Home, Settings, Users, BookOpen, Map, Building2, FileText, Mail, Zap, AlertTriangle } from "lucide-react"
 import { LogoutButton } from "@/components/auth/logout-button"
 
 const navItems = [
@@ -16,6 +16,11 @@ const navItems = [
 		title: "Registrations",
 		href: "/admin/registrations",
 		icon: Users,
+	},
+	{
+		title: "Duplicates",
+		href: "/admin/duplicates",
+		icon: AlertTriangle,
 	},
 	{
 		title: "Chapters",
@@ -36,6 +41,11 @@ const navItems = [
 		title: "Coordinators",
 		href: "/admin/coordinators",
 		icon: Users,
+	},
+	{
+		title: "Slot Management",
+		href: "/admin/slots",
+		icon: Zap,
 	},
 	{
 		title: "Supervisors",
@@ -64,7 +74,7 @@ const navItems = [
 	},
 ]
 
-export function AdminSidebar() {
+export function AdminSidebar({ duplicatesCount = 0 }: { duplicatesCount?: number }) {
 	const pathname = usePathname()
 
 	return (
@@ -86,6 +96,11 @@ export function AdminSidebar() {
 					>
 						<item.icon className="h-4 w-4" />
 						{item.title}
+						{item.href === "/admin/duplicates" && duplicatesCount > 0 && (
+							<span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+								{duplicatesCount}
+							</span>
+						)}
 					</Link>
 				))}
 			</div>

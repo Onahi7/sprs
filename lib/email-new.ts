@@ -4,6 +4,7 @@ import { render } from "@react-email/render"
 import RegistrationConfirmationEmail from "../emails/registration-confirmation"
 import PaymentConfirmationEmail from "../emails/payment-confirmation"
 import CoordinatorNotificationEmail from "../emails/coordinator-notification"
+import CoordinatorDuplicateNotificationEmail from "../emails/coordinator-duplicate-notification"
 
 // Email configuration with fallbacks
 // Configure Resend client
@@ -192,6 +193,51 @@ export async function sendSlotPurchaseConfirmationEmail(data: {
     return { success: true, messageId }
   } catch (error) {
     console.error("❌ Slot purchase email sending error:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unknown error occurred",
+    }
+  }
+}
+
+export async function sendCoordinatorDuplicateNotificationEmail(data: {
+  to: string
+  coordinatorName: string
+  studentName: string
+  registrationNumber: string
+  chapterName: string
+  reason: string
+  adminUser: string
+}) {
+  if (!resendApiKey) {
+    console.error("Resend API key not set")
+    return { success: false, error: "Email service not configured" }
+  }
+
+  try {
+    const emailHtml = await render(
+      CoordinatorDuplicateNotificationEmail({
+        coordinatorName: data.coordinatorName,
+        studentName: data.studentName,
+        registrationNumber: data.registrationNumber,
+        chapterName: data.chapterName,
+        reason: data.reason,
+        adminUser: data.adminUser,
+      })
+    )
+
+    const result = await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'no-reply@sprs.example.com',
+      to: data.to,
+      subject: `🚨 Registration Deletion Notice - ${data.registrationNumber}`,
+      html: emailHtml,
+    })
+
+    const messageId = (result as any).id || ''
+    console.log("✅ Coordinator duplicate notification email sent, id:", messageId)
+    return { success: true, messageId }
+  } catch (error) {
+    console.error("❌ Coordinator duplicate notification email error:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "An unknown error occurred",

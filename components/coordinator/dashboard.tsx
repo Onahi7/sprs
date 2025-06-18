@@ -10,6 +10,7 @@ import { RegistrationChart } from "./registration-chart"
 import { RegistrationsTable } from "./registrations-table"
 import { SplitTransactions } from "./split-transactions"
 import { SlotBalanceDisplay } from "./slot-balance-display"
+import { CoordinatorDuplicateAlert } from "./duplicate-alert"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -181,13 +182,19 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
             Export Data
           </Button>
         </div>
-      </div>
-        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+      </div>      <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
         <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         <p className="text-sm text-blue-800 dark:text-blue-300">
           Welcome, <span className="font-medium">{coordinator?.name || "Coordinator"}</span>
         </p>
-      </div>      {/* Quick Actions */}
+      </div>
+      
+      {/* Duplicate Alert */}
+      {coordinator?.id && chapterId && (
+        <CoordinatorDuplicateAlert coordinatorId={coordinator.id} chapterId={chapterId} />
+      )}
+      
+      {/* Quick Actions */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
           <CardContent className="p-4">

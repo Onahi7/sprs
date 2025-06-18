@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { useToast } from "@/components/ui/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Download, Search, RefreshCw } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Download, Search, RefreshCw, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 
 // Define types
@@ -34,11 +36,13 @@ type Registration = {
     id: number
     name: string
   }
+
   center?: {
     id: number
     name: string
   }
 }
+// ...existing code...
 
 type Center = {
   id: number
@@ -54,6 +58,8 @@ type School = {
 
 export function RegistrationsManagement() {
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const filterParam = searchParams.get('filter')
   
   // State management
   const [registrations, setRegistrations] = useState<Registration[]>([])
@@ -70,6 +76,7 @@ export function RegistrationsManagement() {
   const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [duplicatesFilter, setDuplicatesFilter] = useState<boolean>(filterParam === 'duplicates')
   
   // Fetch centers and schools for the coordinator
   useEffect(() => {
@@ -105,8 +112,7 @@ export function RegistrationsManagement() {
     } else {
       setLoading(true)
     }
-    
-    try {      const queryParams = new URLSearchParams({
+      try {      const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: pageSize.toString(),
         ...(searchQuery && { search: searchQuery }),
@@ -116,7 +122,12 @@ export function RegistrationsManagement() {
         ...(sortBy && { sortBy })
       })
       
-      const res = await fetch(`/api/coordinator/register?${queryParams.toString()}`)
+      // Use the duplicates endpoint if we're filtering for duplicates
+      const endpoint = duplicatesFilter 
+        ? `/api/coordinator/duplicates` 
+        : `/api/coordinator/register`
+      
+      const res = await fetch(`${endpoint}?${queryParams.toString()}`)
       const data = await res.json()
       
       if (res.ok && data.registrations) {
@@ -140,14 +151,14 @@ export function RegistrationsManagement() {
   }  // Fetch registrations on component mount and when filters change
   useEffect(() => {
     fetchRegistrations()
-  }, [page, pageSize, searchQuery, centerFilter, schoolFilter, paymentFilter, sortBy])
+  }, [page, pageSize, searchQuery, centerFilter, schoolFilter, paymentFilter, sortBy, duplicatesFilter])
   
   // Reset to first page when filters change
   useEffect(() => {
     if (page !== 1) {
       setPage(1)
     }
-  }, [pageSize, searchQuery, centerFilter, schoolFilter, paymentFilter, sortBy])
+  }, [pageSize, searchQuery, centerFilter, schoolFilter, paymentFilter, sortBy, duplicatesFilter])
   // Handle export
   const handleExport = async () => {
     try {      const queryParams = new URLSearchParams({
@@ -156,7 +167,8 @@ export function RegistrationsManagement() {
         ...(schoolFilter !== "all" && { schoolId: schoolFilter }),
         ...(paymentFilter !== "all" && { paymentStatus: paymentFilter }),
         ...(sortBy && { sortBy }),
-        export: "true"
+        export: "true",
+        ...(duplicatesFilter && { filter: 'duplicates' })
       })
       
       const res = await fetch(`/api/coordinator/register?${queryParams.toString()}`)
@@ -281,6 +293,30 @@ export function RegistrationsManagement() {
   // Get pagination items
   const paginationItems = generatePaginationItems()
   
+  // Handle duplicates filter changes from URL
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      setDuplicatesFilter(urlParams.get('filter') === 'duplicates');
+    };
+
+    // Listen for back/forward navigation
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  // Update document title based on current view
+  useEffect(() => {
+    if (duplicatesFilter) {
+      document.title = "Duplicate Registrations | NAPPS SPRS";
+    } else {
+      document.title = "Registrations | NAPPS SPRS";
+    }
+  }, [duplicatesFilter]);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -291,6 +327,28 @@ export function RegistrationsManagement() {
               <CardDescription>View and manage student registrations made with your slot balance</CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              {duplicatesFilter && (
+                <Alert className="m-0 p-2 bg-amber-50 border-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-700" />
+                  <AlertDescription className="text-amber-800 text-sm flex items-center justify-between w-full">
+                    <span>Showing duplicate registrations only</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 ml-2 text-amber-800 hover:text-amber-900 hover:bg-amber-100"
+                      onClick={() => {
+                        setDuplicatesFilter(false);
+                        // Update URL without the filter parameter
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('filter');
+                        window.history.pushState({}, '', url);
+                      }}
+                    >
+                      Clear Filter
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
               <Button 
                 variant="outline" 
                 size="sm"
@@ -527,6 +585,7 @@ export function RegistrationsManagement() {
             </>
           )}
         </CardContent>
-      </Card>    </div>
-  )
+      </Card>
+    </div>
+  );
 }

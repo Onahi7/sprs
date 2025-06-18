@@ -4,6 +4,7 @@ import { render } from "@react-email/render"
 import RegistrationConfirmationEmail from "@/emails/registration-confirmation"
 import PaymentConfirmationEmail from "@/emails/payment-confirmation"
 import CoordinatorNotificationEmail from "@/emails/coordinator-notification"
+import CoordinatorDuplicateNotificationEmail from "@/emails/coordinator-duplicate-notification"
 
 // Email configuration with fallbacks
 const emailConfig = {
@@ -193,6 +194,51 @@ export async function sendCoordinatorNotificationEmail(data: {
     }
   } catch (error) {
     console.error("❌ Email sending error:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unknown error occurred",
+    }
+  }
+}
+
+export async function sendCoordinatorDuplicateNotificationEmail(data: {
+  to: string
+  coordinatorName: string
+  studentName: string
+  registrationNumber: string
+  chapterName: string
+  reason: string
+  adminUser: string
+}) {
+  const mailer = getTransporter()
+  if (!mailer) {
+    return { success: false, error: "Email service not available" }
+  }
+
+  try {
+    const emailHtml = await render(
+      CoordinatorDuplicateNotificationEmail({
+        coordinatorName: data.coordinatorName,
+        studentName: data.studentName,
+        registrationNumber: data.registrationNumber,
+        chapterName: data.chapterName,
+        reason: data.reason,
+        adminUser: data.adminUser,
+      })
+    )
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || `"NAPPS Nasarawa" <${emailConfig.auth.user}>`,
+      to: data.to,
+      subject: `🚨 Registration Deletion Notice - ${data.registrationNumber}`,
+      html: emailHtml,
+    }
+
+    const result = await mailer.sendMail(mailOptions)
+    console.log("✅ Coordinator duplicate notification email sent, messageId:", result.messageId)
+    return { success: true, messageId: result.messageId }
+  } catch (error) {
+    console.error("❌ Coordinator duplicate notification email error:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "An unknown error occurred",
