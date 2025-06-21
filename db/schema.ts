@@ -182,6 +182,7 @@ export const resultEntryUsers = pgTable("result_entry_users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   chapterId: integer("chapter_id").references(() => chapters.id),
+  centerId: integer("center_id").references(() => centers.id),
   name: text("name").notNull(),
   email: text("email"),
   isActive: boolean("is_active").default(true),
@@ -228,6 +229,7 @@ export const centersRelations = relations(centers, ({ one, many }) => ({
   }),
   registrations: many(registrations),
   supervisors: many(supervisors),
+  resultEntryUsers: many(resultEntryUsers),
 }))
 
 export const chapterCoordinatorsRelations = relations(chapterCoordinators, ({ one, many }) => ({
@@ -334,6 +336,10 @@ export const resultEntryUsersRelations = relations(resultEntryUsers, ({ one, man
   chapter: one(chapters, {
     fields: [resultEntryUsers.chapterId],
     references: [chapters.id],
+  }),
+  center: one(centers, {
+    fields: [resultEntryUsers.centerId],
+    references: [centers.id],
   }),
   results: many(studentResults),
 }))

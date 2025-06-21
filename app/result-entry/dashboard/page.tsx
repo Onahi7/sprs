@@ -14,6 +14,8 @@ type User = {
   name: string
   chapterId: number
   chapterName: string
+  centerId: number
+  centerName: string
 }
 
 type Stats = {
@@ -51,7 +53,6 @@ export default function ResultEntryDashboard() {
       handleLogout()
     }
   }
-
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem("resultEntryToken")
@@ -62,18 +63,11 @@ export default function ResultEntryDashboard() {
 
       const user = JSON.parse(userData)
       
-      // Fetch chapter registrations count
-      const registrationsResponse = await fetch(`/api/coordinator/${user.username}/registrations`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      })
-      
       // Fetch subjects
       const subjectsResponse = await fetch("/api/admin/subjects")
       
-      // Fetch results for this chapter
-      const resultsResponse = await fetch(`/api/results?chapterId=${user.chapterId}`, {
+      // Fetch results for this center (center-specific)
+      const resultsResponse = await fetch(`/api/results?centerId=${user.centerId}`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -83,12 +77,12 @@ export default function ResultEntryDashboard() {
         const subjects = await subjectsResponse.json()
         const results = resultsResponse.ok ? await resultsResponse.json() : []
         
-        // Calculate basic stats (you may need to adjust based on your actual API responses)
+        // Calculate basic stats for this center
         const totalSubjects = subjects.length
         const uniqueStudentsWithResults = new Set(results.map((r: any) => r.registration?.id)).size
         
         setStats({
-          totalStudents: 0, // You'll need to implement this endpoint
+          totalStudents: 0, // You'll need to implement this endpoint for center-specific count
           studentsWithResults: uniqueStudentsWithResults,
           completedSubjects: results.length,
           totalSubjects
@@ -149,13 +143,12 @@ export default function ResultEntryDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">        <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Welcome back, {user.name}!
           </h2>
           <p className="text-gray-600">
-            Enter and manage examination results for {user.chapterName}
+            Enter and manage examination results for {user.centerName} - {user.chapterName}
           </p>
         </div>
 

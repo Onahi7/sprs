@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowLeft, Search, Users, BookOpen, Edit, Trash2, Download } from "lucide-react"
+import { Loader2, ArrowLeft, Search, Users, BookOpen, Edit, Trash2, Download, FileText } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 type User = {
@@ -17,6 +17,8 @@ type User = {
   name: string
   chapterId: number
   chapterName: string
+  centerId: number
+  centerName: string
 }
 
 type Subject = {
@@ -479,15 +481,23 @@ export default function ViewResults() {
                         >
                           {studentData.overallGrade}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
+                      </TableCell>                      <TableCell>
                         <div className="flex items-center space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => router.push("/result-entry/enter-results")}
+                            title="Edit Results"
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/student/results/${studentData.student.registrationNumber}/slip`)}
+                            title="View Result Slip"
+                          >
+                            <FileText className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { resultEntryUsers, chapters } from "@/db/schema"
+import { resultEntryUsers, chapters, centers } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
@@ -21,9 +21,7 @@ export async function POST(request: NextRequest) {
         { error: "Username and password are required" },
         { status: 400 }
       )
-    }
-
-    // Find user with chapter information
+    }    // Find user with chapter and center information
     const user = await db
       .select({
         id: resultEntryUsers.id,
@@ -32,11 +30,14 @@ export async function POST(request: NextRequest) {
         name: resultEntryUsers.name,
         email: resultEntryUsers.email,
         chapterId: resultEntryUsers.chapterId,
+        centerId: resultEntryUsers.centerId,
         chapterName: chapters.name,
+        centerName: centers.name,
         isActive: resultEntryUsers.isActive,
       })
       .from(resultEntryUsers)
       .leftJoin(chapters, eq(resultEntryUsers.chapterId, chapters.id))
+      .leftJoin(centers, eq(resultEntryUsers.centerId, centers.id))
       .where(
         and(
           eq(resultEntryUsers.username, username),
@@ -61,14 +62,13 @@ export async function POST(request: NextRequest) {
         { error: "Invalid credentials" },
         { status: 401 }
       )
-    }
-
-    // Generate JWT token
+    }    // Generate JWT token
     const token = jwt.sign(
       {
         userId: userData.id,
         username: userData.username,
         chapterId: userData.chapterId,
+        centerId: userData.centerId,
         role: "result_entry",
       },
       JWT_SECRET,

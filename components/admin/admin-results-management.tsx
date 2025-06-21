@@ -458,10 +458,10 @@ export function AdminResultsManagement() {
                         <TableHead key={subject.id} className="w-24 text-center">
                           {subject.code}
                         </TableHead>
-                      ))}
-                      <TableHead className="w-24 text-center">Total</TableHead>
+                      ))}                      <TableHead className="w-24 text-center">Total</TableHead>
                       <TableHead className="w-24 text-center">Average</TableHead>
                       <TableHead className="w-20 text-center">Grade</TableHead>
+                      <TableHead className="w-24">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -508,14 +508,23 @@ export function AdminResultsManagement() {
                         </TableCell>
                         <TableCell className="text-center">
                           {studentData.averagePercentage.toFixed(1)}%
-                        </TableCell>
-                        <TableCell className="text-center">
+                        </TableCell>                        <TableCell className="text-center">
                           <Badge 
                             variant={studentData.overallGrade === "F" ? "destructive" : 
                                      studentData.overallGrade === "A" ? "default" : "secondary"}
                           >
                             {studentData.overallGrade}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(`/student/results/${studentData.student.registrationNumber}/slip`, '_blank')}
+                            title="View Result Slip"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

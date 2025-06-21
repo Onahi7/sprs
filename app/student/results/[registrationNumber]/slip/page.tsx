@@ -1,0 +1,394 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Loader2, Printer, Download, ArrowLeft } from "lucide-react"
+import Image from "next/image"
+
+export default function ResultSlipPage() {
+  const params = useParams()
+  const router = useRouter()
+  const registrationNumber = params.registrationNumber as string
+  
+  const [results, setResults] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [centerPosition, setCenterPosition] = useState<number>(0)
+
+  useEffect(() => {
+    fetchResults()
+  }, [registrationNumber])
+  const fetchResults = async () => {
+    try {
+      // Fetch registration details
+      const registrationResponse = await fetch(`/api/registrations?registrationNumber=${registrationNumber}`)
+      if (!registrationResponse.ok) throw new Error("Registration not found")
+      
+      const registration = await registrationResponse.json()
+      
+      // Fetch results
+      const resultsResponse = await fetch(`/api/results?registrationNumber=${registrationNumber}`)
+      if (!resultsResponse.ok) throw new Error("Results not found")
+      
+      const studentResults = await resultsResponse.json()
+      
+      // Fetch center position (ranking within center)
+      await calculateCenterPosition(registration.centerId, studentResults)
+      
+      // Process results
+      const processedResults = processStudentResults(studentResults, registration)
+      setResults(processedResults)
+      
+    } catch (error) {
+      console.error("Error fetching results:", error)
+      setError("Failed to load results")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const calculateCenterPosition = async (centerId: number, currentResults: any[]) => {
+    try {
+      // Fetch all results for the center to calculate position
+      const centerResultsResponse = await fetch(`/api/results?centerId=${centerId}`)
+      if (centerResultsResponse.ok) {
+        const allCenterResults = await centerResultsResponse.json()
+        
+        // Group by student and calculate total scores
+        const studentTotals: { [key: string]: number } = {}
+        
+        allCenterResults.forEach((result: any) => {
+          const regNumber = result.registration.registrationNumber
+          if (!studentTotals[regNumber]) {
+            studentTotals[regNumber] = 0
+          }
+          studentTotals[regNumber] += result.score
+        })
+        
+        // Calculate current student's total
+        const currentTotal = currentResults.reduce((sum, result) => sum + result.score, 0)
+        
+        // Sort and find position
+        const sortedTotals = Object.values(studentTotals).sort((a, b) => b - a)
+        const position = sortedTotals.findIndex(total => total <= currentTotal) + 1
+        
+        setCenterPosition(position)
+      }
+    } catch (error) {
+      console.warn("Could not calculate center position:", error)
+      setCenterPosition(0)
+    }
+  }
+
+  const processStudentResults = (studentResults: any[], registration: any) => {
+    const resultsBySubject = studentResults.reduce((acc: any, result: any) => {
+      acc[result.subject.id] = result
+      return acc
+    }, {})
+
+    const totalScore = studentResults.reduce((sum, result) => sum + result.score, 0)
+    const totalMaxScore = studentResults.reduce((sum, result) => sum + result.subject.maxScore, 0)
+    const averagePercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0
+    const overallGrade = calculateOverallGrade(averagePercentage)
+
+    return {
+      student: {
+        registrationNumber: registration.registrationNumber,
+        firstName: registration.firstName,
+        lastName: registration.lastName,
+        middleName: registration.middleName,
+        class: registration.class,
+        centerName: registration.centerName,
+        chapterName: registration.chapterName,
+        schoolName: registration.schoolName,
+        passportUrl: registration.passportUrl
+      },
+      subjects: studentResults.map(result => result.subject),
+      results: resultsBySubject,
+      totalScore,
+      totalMaxScore,
+      averagePercentage,
+      overallGrade,
+      isPassed: averagePercentage >= 50
+    }
+  }
+
+  const calculateOverallGrade = (percentage: number): string => {
+    if (percentage >= 80) return "A"
+    if (percentage >= 70) return "B"
+    if (percentage >= 60) return "C"
+    if (percentage >= 50) return "D"
+    if (percentage >= 40) return "E"
+    return "F"
+  }
+
+  const handlePrint = () => {
+    window.print()
+  }  
+  const handleDownload = async () => {
+    try {
+      // Call the PDF generation API
+      const response = await fetch(`/api/student/results/${registrationNumber}/slip`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+      
+      // Get the PDF blob
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `result-slip-${registrationNumber}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+      // Fallback to print
+      handlePrint()
+    }
+  }
+
+  const getOrdinalSuffix = (num: number): string => {
+    const j = num % 10
+    const k = num % 100
+    if (j === 1 && k !== 11) return "st"
+    if (j === 2 && k !== 12) return "nd"
+    if (j === 3 && k !== 13) return "rd"
+    return "th"
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error || !results) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || "Results not found"}</p>
+          <Button onClick={() => router.back()}>Go Back</Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {/* Print/Download Controls - Hidden in print */}
+      <div className="print:hidden bg-gray-50 py-4">
+        <div className="container mx-auto px-4 flex justify-between items-center">
+          <Button variant="outline" onClick={() => router.back()} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Results
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handlePrint} className="gap-2">
+              <Printer className="h-4 w-4" />
+              Print
+            </Button>
+            <Button onClick={handleDownload} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
+          </div>
+        </div>
+      </div>      {/* Result Slip - Printable - Exact Format */}
+      <div className="min-h-screen bg-white print:min-h-0">
+        <div className="max-w-4xl mx-auto p-8 print:p-6 result-slip-container">
+          
+          {/* Header Section */}
+          <div className="border-2 border-gray-800 p-4 mb-4 result-slip-header">
+            <div className="flex items-center justify-between mb-4">
+              {/* Left: Logo */}
+              <div className="flex items-center">
+                <div className="w-20 h-20 mr-4">
+                  <Image
+                    src="/napps-logo.svg"
+                    alt="NAPPS Logo"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      // Fallback to placeholder
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder-logo.svg";
+                    }}
+                  />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900 leading-tight">
+                    NAPPS NASARAWA STATE CHAPTER
+                  </h1>
+                  <p className="text-sm text-gray-700 mt-1">
+                    Besides SALAMATU Hall Lafia, Jos Road
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    Napps Nasarawa State Unified Certificate Examination
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">(NNSUCE-2024)</p>
+                </div>
+              </div>
+              
+              {/* Right: Result Slip Title and Date */}
+              <div className="text-right">
+                <h2 className="text-2xl font-bold text-red-600 mb-2">RESULT SLIP</h2>
+                <p className="text-sm text-red-600">Exam Date: 08/06/24</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Candidate Details Section */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Candidate Details</h3>
+            
+            <div className="flex">
+              {/* Left: Student Information */}
+              <div className="flex-1 space-y-3">
+                <div className="flex">
+                  <span className="font-semibold w-40 text-gray-700">Student Name:</span>
+                  <span className="font-bold text-gray-900">
+                    {results.student.firstName?.toUpperCase()} {results.student.lastName?.toUpperCase()}
+                  </span>
+                </div>
+                
+                <div className="flex">
+                  <span className="font-semibold w-40 text-gray-700">Registration Number:</span>
+                  <span className="font-bold text-gray-900 font-mono">
+                    {results.student.registrationNumber}
+                  </span>
+                </div>
+                
+                <div className="flex">
+                  <span className="font-semibold w-40 text-gray-700">Center Name:</span>
+                  <span className="font-bold text-gray-900">
+                    {results.student.centerName}
+                  </span>
+                </div>
+                
+                <div className="flex">
+                  <span className="font-semibold w-40 text-gray-700">School Name:</span>
+                  <span className="font-bold text-gray-900">
+                    {results.student.schoolName}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Right: Student Photo */}
+              <div className="ml-8">
+                <div className="w-32 h-40 border-2 border-gray-400 bg-gray-100 flex items-center justify-center">
+                  {results.student.passportUrl ? (
+                    <Image 
+                      src={results.student.passportUrl} 
+                      alt="Student Photo"
+                      width={128}
+                      height={160}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200"></div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Subjects Table */}
+          <div className="mb-6">
+            <table className="w-full border-collapse subjects-table">
+              <thead>
+                <tr>
+                  <th className="bg-green-600 text-white border border-gray-400 p-2 text-left green-header">
+                    SUBJECT
+                  </th>
+                  <th className="bg-green-600 text-white border border-gray-400 p-2 text-center green-header">
+                    SCORE
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.subjects.map((subject: any, index: number) => {
+                  const result = results.results[subject.id]
+                  const isEven = index % 2 === 0
+                  
+                  return (
+                    <tr key={subject.id} className={isEven ? "bg-gray-100 gray-row" : "bg-yellow-100 yellow-row"}>
+                      <td className="border border-gray-400 p-3 font-semibold">
+                        {subject.name}
+                      </td>
+                      <td className="border border-gray-400 p-3 text-center font-bold text-lg">
+                        {result.score}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Total and Position Section */}
+          <div className="flex justify-between items-center mb-8">
+            <div className="bg-gray-300 px-6 py-2 rounded total-box">
+              <span className="font-bold text-lg">TOTAL</span>
+              <span className="ml-4 font-bold text-xl">{results.totalScore}</span>
+            </div>
+            
+            <div className="bg-gray-300 px-6 py-2 rounded position-box">
+              <span className="font-bold text-lg">Center Position</span>
+              <span className="ml-4 font-bold text-xl">{centerPosition > 0 ? `${centerPosition}${getOrdinalSuffix(centerPosition)}` : 'N/A'}</span>
+            </div>
+          </div>
+
+          {/* Signature Section */}
+          <div className="flex justify-between items-center mb-8">
+            <div className="text-center">
+              <div className="mb-12">
+                <div className="border-b-2 border-black w-40 mx-auto mb-2"></div>
+                <p className="text-sm font-semibold">Opah Omaku Ogan</p>
+                <p className="text-xs">State Chairman</p>
+              </div>
+            </div>
+            
+            <div className="flex-1 text-center">
+              {/* Barcode area */}
+              <div className="mb-4">
+                <div className="inline-block">
+                  {/* Simple barcode representation */}
+                  <div className="flex space-x-1">
+                    {Array.from({length: 20}, (_, i) => (
+                      <div 
+                        key={i} 
+                        className="bg-black" 
+                        style={{
+                          width: Math.random() > 0.5 ? '2px' : '4px',
+                          height: '40px'
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+                  <p className="text-xs mt-2 font-mono">{results.student.registrationNumber}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center text-xs text-gray-600 border-t pt-4">
+            <p>This is an official document of NAPPS Nasarawa State Chapter</p>
+            <p>For verification or inquiries, contact the examination body</p>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}

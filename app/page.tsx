@@ -86,6 +86,12 @@ export default function Home() {
                       Check Status
                     </Button>
                   </Link>
+                  <Link href="/student/results">
+                    <Button variant="outline" size="lg" className="text-[#006400] border-[#006400] hover:bg-[#006400]/10 w-full sm:w-auto">
+                      View Results
+                      <BookOpen className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
                 <div className="flex items-center gap-4 pt-4">
                   <div className="flex -space-x-2">
@@ -197,6 +203,15 @@ export default function Home() {
                       Check Status
                     </Button>
                   </Link>
+                  <Link href="/student/results">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full sm:w-auto border-white text-white hover:bg-white/10"
+                    >
+                      View Results
+                    </Button>
+                  </Link>
                 </div>
               </div>
               <div className="flex justify-center lg:justify-end">
@@ -247,6 +262,11 @@ export default function Home() {
                 <li>
                   <Link href="/status" className="text-white/80 hover:text-white transition-colors">
                     Check Status
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/student/results" className="text-white/80 hover:text-white transition-colors">
+                    View Results
                   </Link>
                 </li>
                 <li>

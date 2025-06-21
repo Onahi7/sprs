@@ -288,12 +288,11 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.text(paymentStatus, 32.5, yPos + 6, { align: 'center' });
-    
-    // Payment details
+      // Payment details - price removed as per requirements
     doc.setTextColor(...primaryText);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Examination Fee: ₦3,000.00', 60, yPos + 6);
+    doc.text('Payment Status: Confirmed', 60, yPos + 6);
     
     if (registration.paymentReference && registration.paymentStatus === "completed") {
       yPos += 5;
@@ -434,6 +433,311 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     const fallbackOutput = fallbackDoc.output('arraybuffer');
     return Buffer.from(fallbackOutput);
   }
+}
+
+// New interface for result slip PDF generation
+export interface ResultSlipData {
+  student: {
+    registrationNumber: string;
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    class?: string;
+    centerName: string;
+    chapterName: string;
+    schoolName: string;
+    passportUrl?: string;
+  };
+  subjects: Array<{
+    id: number;
+    name: string;
+    maxScore: number;
+  }>;
+  results: { [subjectId: number]: { score: number; grade: string } };
+  totalScore: number;
+  totalMaxScore: number;
+  averagePercentage: number;
+  overallGrade: string;
+  centerPosition?: number;
+}
+
+export async function generateResultSlipPDF(resultData: ResultSlipData): Promise<Buffer> {
+  try {
+    // Create a new jsPDF document
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Color scheme
+    const nappsGreen = [0, 128, 55] as const;
+    const primaryText = [33, 37, 41] as const;
+    const secondaryText = [108, 117, 125] as const;
+    const redText = [220, 53, 69] as const;
+    const white = [255, 255, 255] as const;
+    const lightGray = [248, 249, 250] as const;
+    const borderColor = [0, 0, 0] as const;
+
+    // Set clean white background
+    doc.setFillColor(...white);
+    doc.rect(0, 0, 210, 297, 'F');
+
+    let yPos = 15;
+
+    // Main border
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(2);
+    doc.rect(10, 10, 190, 270);
+
+    // Header section with border
+    doc.setLineWidth(1);
+    doc.rect(15, 15, 180, 50);
+
+    // Logo area (left side)
+    const logoX = 20;
+    const logoY = 20;
+    const logoSize = 20;
+    
+    // Simplified logo placeholder
+    doc.setFillColor(...nappsGreen);
+    doc.circle(logoX + logoSize/2, logoY + logoSize/2, 8, 'F');
+    doc.setTextColor(...white);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('N', logoX + logoSize/2, logoY + logoSize/2 + 2, { align: 'center' });
+
+    // Organization header (center-left)
+    yPos = 25;
+    doc.setTextColor(...primaryText);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NAPPS NASARAWA STATE CHAPTER', 50, yPos);
+    
+    yPos += 5;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Besides SALAMATU Hall Lafia, Jos Road', 50, yPos);
+    
+    yPos += 4;
+    doc.text('Napps Nasarawa State Unified Certificate Examination', 50, yPos);
+    
+    yPos += 4;
+    doc.text('(NNSUCE-2024)', 50, yPos);
+
+    // Result Slip title and date (right side)
+    doc.setTextColor(...redText);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RESULT SLIP', 170, 30, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.text('Exam Date: 08/06/24', 170, 40, { align: 'center' });
+
+    // Candidate Details section
+    yPos = 75;
+    doc.setTextColor(...primaryText);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Candidate Details', 20, yPos);
+
+    // Student information (left side)
+    yPos += 10;
+    const infoX = 20;
+    
+    const addInfoRow = (label: string, value: string, y: number) => {
+      doc.setTextColor(...secondaryText);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, infoX, y);
+      
+      doc.setTextColor(...primaryText);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, infoX + 45, y);
+    };
+
+    const fullName = `${resultData.student.firstName} ${resultData.student.lastName}`.toUpperCase();
+    
+    addInfoRow('Student Name:', fullName, yPos);
+    yPos += 8;
+    
+    addInfoRow('Registration Number:', resultData.student.registrationNumber, yPos);
+    yPos += 8;
+    
+    addInfoRow('Center Name:', resultData.student.centerName, yPos);
+    yPos += 8;
+    
+    addInfoRow('School Name:', resultData.student.schoolName, yPos);
+
+    // Student photo (right side)
+    const photoX = 150;
+    const photoY = 85;
+    const photoWidth = 30;
+    const photoHeight = 40;
+    
+    if (resultData.student.passportUrl) {
+      try {
+        const base64Image = await imageUrlToBase64(resultData.student.passportUrl);
+        doc.addImage(base64Image, 'JPEG', photoX, photoY, photoWidth, photoHeight);
+      } catch (error) {
+        // Fallback placeholder
+        doc.setFillColor(...lightGray);
+        doc.rect(photoX, photoY, photoWidth, photoHeight, 'F');
+      }
+    } else {
+      // Placeholder
+      doc.setFillColor(...lightGray);
+      doc.rect(photoX, photoY, photoWidth, photoHeight, 'F');
+    }
+    
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(1);
+    doc.rect(photoX, photoY, photoWidth, photoHeight);
+
+    // Subjects table
+    yPos = 140;
+    
+    // Table header
+    const tableX = 20;
+    const subjectColWidth = 100;
+    const scoreColWidth = 60;
+    
+    doc.setFillColor(...nappsGreen);
+    doc.rect(tableX, yPos, subjectColWidth, 12, 'F');
+    doc.rect(tableX + subjectColWidth, yPos, scoreColWidth, 12, 'F');
+    
+    doc.setTextColor(...white);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SUBJECT', tableX + 5, yPos + 8);
+    doc.text('SCORE', tableX + subjectColWidth + 25, yPos + 8);
+    
+    // Table borders
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(1);
+    doc.rect(tableX, yPos, subjectColWidth + scoreColWidth, 12);
+    
+    yPos += 12;
+    
+    // Subject rows
+    resultData.subjects.forEach((subject, index) => {
+      const result = resultData.results[subject.id];
+      const isEven = index % 2 === 0;
+      
+      // Row background
+      if (isEven) {
+        doc.setFillColor(240, 240, 240);
+      } else {
+        doc.setFillColor(255, 255, 200); // Light yellow
+      }
+      doc.rect(tableX, yPos, subjectColWidth + scoreColWidth, 10, 'F');
+      
+      // Row text
+      doc.setTextColor(...primaryText);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(subject.name, tableX + 5, yPos + 7);
+      
+      doc.setFontSize(12);
+      doc.text(result.score.toString(), tableX + subjectColWidth + 25, yPos + 7);
+      
+      // Row border
+      doc.setDrawColor(...borderColor);
+      doc.rect(tableX, yPos, subjectColWidth + scoreColWidth, 10);
+      
+      yPos += 10;
+    });
+
+    // Total and Position
+    yPos += 15;
+    
+    // Total box
+    doc.setFillColor(200, 200, 200);
+    doc.rect(30, yPos, 40, 15, 'F');
+    doc.setDrawColor(...borderColor);
+    doc.rect(30, yPos, 40, 15);
+    
+    doc.setTextColor(...primaryText);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL', 35, yPos + 6);
+    doc.setFontSize(14);
+    doc.text(resultData.totalScore.toString(), 50, yPos + 12);
+
+    // Position box (if available)
+    if (resultData.centerPosition && resultData.centerPosition > 0) {
+      doc.setFillColor(200, 200, 200);
+      doc.rect(120, yPos, 50, 15, 'F');
+      doc.setDrawColor(...borderColor);
+      doc.rect(120, yPos, 50, 15);
+      
+      doc.setFontSize(11);
+      doc.text('Center Position', 125, yPos + 6);
+      doc.setFontSize(14);
+      const ordinal = getOrdinalSuffix(resultData.centerPosition);
+      doc.text(`${resultData.centerPosition}${ordinal}`, 145, yPos + 12);
+    }
+
+    // Signature section
+    yPos += 40;
+    
+    // Signature line
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(1);
+    doc.line(30, yPos, 80, yPos);
+    
+    yPos += 5;
+    doc.setTextColor(...primaryText);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Opah Omaku Ogan', 55, yPos, { align: 'center' });
+    
+    yPos += 4;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('State Chairman', 55, yPos, { align: 'center' });
+
+    // Barcode area
+    const barcodeX = 120;
+    const barcodeY = yPos - 25;
+    
+    // Simple barcode representation
+    doc.setFillColor(...primaryText);
+    for (let i = 0; i < 15; i++) {
+      const barWidth = Math.random() > 0.5 ? 1 : 2;
+      const barHeight = 20;
+      doc.rect(barcodeX + (i * 3), barcodeY, barWidth, barHeight, 'F');
+    }
+    
+    doc.setFontSize(7);
+    doc.text(resultData.student.registrationNumber, barcodeX + 22, barcodeY + 25, { align: 'center' });
+
+    // Footer
+    yPos = 260;
+    doc.setTextColor(...secondaryText);
+    doc.setFontSize(8);
+    doc.text('This is an official document of NAPPS Nasarawa State Chapter', 105, yPos, { align: 'center' });
+    
+    yPos += 5;
+    doc.text('For verification or inquiries, contact the examination body', 105, yPos, { align: 'center' });
+
+    // Convert to buffer
+    const pdfOutput = doc.output('arraybuffer');
+    return Buffer.from(pdfOutput);
+    
+  } catch (error) {
+    console.error('Error generating result slip PDF:', error);
+    throw error;
+  }
+}
+
+function getOrdinalSuffix(num: number): string {
+  const j = num % 10;
+  const k = num % 100;
+  if (j === 1 && k !== 11) return "st";
+  if (j === 2 && k !== 12) return "nd";
+  if (j === 3 && k !== 13) return "rd";
+  return "th";
 }
 
 // Export default for compatibility

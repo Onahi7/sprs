@@ -174,8 +174,7 @@
 }
 
 .dark .bg-white {
-  background-color: #ffffff;
-  color: #000000;
+  @apply bg-white text-black;
 }
 
 .bg-gray-50 {

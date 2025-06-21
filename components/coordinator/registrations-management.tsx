@@ -42,7 +42,6 @@ type Registration = {
     name: string
   }
 }
-// ...existing code...
 
 type Center = {
   id: number
@@ -197,9 +196,9 @@ export function RegistrationsManagement() {
         title: "Error",
         description: "Failed to export registrations",
         variant: "destructive",
-      })
-    }
-  }  
+      })    }
+  }
+  
   // Function to download registration slip
   const downloadRegistrationSlip = async (registrationNumber: string) => {
     try {
@@ -231,6 +230,44 @@ export function RegistrationsManagement() {
         description: "Failed to download registration slip.",
         variant: "destructive"
       })
+    }
+  }
+  
+  // Function to bulk download all registration slips as ZIP
+  const handleBulkDownload = async () => {
+    try {
+      setRefreshing(true)
+      
+      const response = await fetch('/api/coordinator/registrations/bulk-download')
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate bulk download')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `registration-slips-${new Date().toISOString().slice(0, 10)}.zip`
+      document.body.appendChild(a)
+      a.click()
+      
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast({
+        title: "Bulk Download Complete",
+        description: "All registration slips downloaded successfully as ZIP file.",
+      })
+    } catch (error) {
+      console.error('Error downloading bulk registration slips:', error)
+      toast({
+        title: "Download Error",
+        description: "Failed to download registration slips.",
+        variant: "destructive"
+      })
+    } finally {
+      setRefreshing(false)
     }
   }
   
@@ -358,15 +395,24 @@ export function RegistrationsManagement() {
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
-              </Button>
-              <Button 
+              </Button>              <Button 
                 variant="outline" 
                 size="sm"
                 onClick={handleExport} 
                 className="flex items-center gap-1"
               >
                 <Download className="w-4 h-4" />
-                Export
+                Export CSV
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleBulkDownload}
+                disabled={refreshing}
+                className="flex items-center gap-1"
+              >
+                <Download className="w-4 h-4" />
+                Download All Slips
               </Button>
             </div>
           </div>
@@ -510,12 +556,12 @@ export function RegistrationsManagement() {
                               Download
                             </Button>
                           </TableCell>
-                        </TableRow>
-                      ))
+                        </TableRow>                      ))
                     )}
-                  </TableBody>
-                </Table>
-              </div>              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  </TableBody></Table>
+              </div>
+              
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Items per page:</span>
                   <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>

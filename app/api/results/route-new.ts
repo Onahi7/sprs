@@ -9,11 +9,72 @@ export async function GET(request: NextRequest) {
   try {
     if (!db) {
       throw new Error("Database connection not available")
-    }    // Check authentication for filtered queries
+    }
+
     const { searchParams } = new URL(request.url)
     const chapterId = searchParams.get("chapterId")
     const centerId = searchParams.get("centerId")
-    
+    const registrationNumber = searchParams.get("registrationNumber")
+    const subjectId = searchParams.get("subjectId")
+
+    // Handle public result lookup by registration number (for students)
+    if (registrationNumber && !chapterId && !centerId) {
+      // Apply rate limiting for public lookups
+      const clientIP = request.headers.get("x-forwarded-for") || 
+                      request.headers.get("x-real-ip") || 
+                      "unknown"
+      
+      const rateLimitResult = checkRateLimit(clientIP)
+      if (!rateLimitResult.success) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again later." }, 
+          { status: 429 }
+        )
+      }
+
+      // For public access, verify registration exists and payment is completed
+      const registration = await db
+        .select()
+        .from(registrations)
+        .where(eq(registrations.registrationNumber, registrationNumber))
+        .limit(1)
+
+      if (registration.length === 0) {
+        return NextResponse.json({ error: "Registration not found" }, { status: 404 })
+      }
+
+      // Only show results for completed payments
+      if (registration[0].paymentStatus !== 'completed') {
+        return NextResponse.json(
+          { error: "Results are only available for students who have completed payment" }, 
+          { status: 403 }
+        )
+      }
+
+      // Fetch and return results for this registration
+      const results = await db
+        .select({
+          id: studentResults.id,
+          registrationId: studentResults.registrationId,
+          subjectId: studentResults.subjectId,
+          score: studentResults.score,
+          grade: studentResults.grade,
+          enteredAt: studentResults.enteredAt,
+          subject: {
+            id: subjects.id,
+            name: subjects.name,
+            code: subjects.code,
+            maxScore: subjects.maxScore,
+          },
+        })
+        .from(studentResults)
+        .leftJoin(subjects, eq(studentResults.subjectId, subjects.id))
+        .where(eq(studentResults.registrationId, registration[0].id))
+
+      return NextResponse.json(results)
+    }
+
+    // Admin/Coordinator access (requires authentication)
     if (chapterId || centerId) {
       const authHeader = request.headers.get("authorization")
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -34,9 +95,9 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         return NextResponse.json({ error: "Invalid token" }, { status: 401 })
       }
-    }    const registrationNumber = searchParams.get("registrationNumber")
-    const subjectId = searchParams.get("subjectId")
+    }
 
+    // Build query for authenticated access
     const baseQuery = db
       .select({
         id: studentResults.id,
@@ -187,9 +248,9 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: `Saved ${savedResults.length} results`,
-        results: savedResults 
+        results: savedResults,
       })
     }
 
@@ -198,7 +259,7 @@ export async function POST(request: NextRequest) {
 
     if (!registrationId || !subjectId || score === undefined) {
       return NextResponse.json(
-        { error: "Registration ID, subject ID, and score are required" },
+        { error: "Missing required fields" },
         { status: 400 }
       )
     }
@@ -217,9 +278,11 @@ export async function POST(request: NextRequest) {
       )
       .limit(1)
 
+    let savedResult
+
     if (existingResult.length > 0) {
       // Update existing result
-      const updatedResult = await db
+      const updated = await db
         .update(studentResults)
         .set({
           score,
@@ -230,10 +293,10 @@ export async function POST(request: NextRequest) {
         .where(eq(studentResults.id, existingResult[0].id))
         .returning()
 
-      return NextResponse.json(updatedResult[0])
+      savedResult = updated[0]
     } else {
       // Create new result
-      const newResult = await db
+      const created = await db
         .insert(studentResults)
         .values({
           registrationId,
@@ -244,8 +307,10 @@ export async function POST(request: NextRequest) {
         })
         .returning()
 
-      return NextResponse.json(newResult[0], { status: 201 })
+      savedResult = created[0]
     }
+
+    return NextResponse.json(savedResult)
   } catch (error) {
     console.error("Error saving student result:", error)
     return NextResponse.json(
@@ -253,16 +318,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-function calculateGrade(score: number, maxScore: number): string {
-  const percentage = (score / maxScore) * 100
-  if (percentage >= 80) return "A"
-  if (percentage >= 70) return "B"
-  if (percentage >= 60) return "C"
-  if (percentage >= 50) return "D"
-  if (percentage >= 40) return "E"
-  return "F"
 }
 
 export async function DELETE(request: NextRequest) {
@@ -294,9 +349,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    await db
-      .delete(studentResults)
-      .where(eq(studentResults.id, id))
+    await db.delete(studentResults).where(eq(studentResults.id, id))
 
     return NextResponse.json({ message: "Result deleted successfully" })
   } catch (error) {
@@ -306,4 +359,16 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+// Helper function to calculate grade based on score and max score
+function calculateGrade(score: number, maxScore: number): string {
+  const percentage = (score / maxScore) * 100
+  
+  if (percentage >= 80) return "A"
+  if (percentage >= 70) return "B"
+  if (percentage >= 60) return "C"
+  if (percentage >= 50) return "D"
+  if (percentage >= 40) return "E"
+  return "F"
 }

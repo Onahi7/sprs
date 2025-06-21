@@ -85,6 +85,7 @@
     "jsbarcode": "^3.11.6",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.1",
+    "jszip": "^3.10.1",
     "knex": "latest",
     "kysely": "latest",
     "lucide-react": "^0.454.0",
@@ -121,6 +122,7 @@
   "devDependencies": {
     "@types/jsbarcode": "^3.11.4",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/jszip": "^3.4.1",
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.17",
     "@types/qrcode-generator": "^1.0.6",

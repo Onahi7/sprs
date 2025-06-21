@@ -17,6 +17,8 @@ type User = {
   name: string
   chapterId: number
   chapterName: string
+  centerId: number
+  centerName: string
 }
 
 type Subject = {
@@ -46,21 +48,29 @@ type StudentResult = {
   grade?: string
 }
 
+type Center = {
+  id: number
+  name: string
+  chapterId: number
+}
+
 type StudentWithResults = Student & {
   results: { [subjectId: number]: StudentResult }
 }
 
 export default function EnterResults() {
   const [user, setUser] = useState<User | null>(null)
+  const [centers, setCenters] = useState<Center[]>([])
+  const [selectedCenter, setSelectedCenter] = useState<string>("")
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [students, setStudents] = useState<StudentWithResults[]>([])
   const [filteredStudents, setFilteredStudents] = useState<StudentWithResults[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingStudents, setLoadingStudents] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const router = useRouter()
   const { toast } = useToast()
-
   useEffect(() => {
     checkAuth()
     fetchSubjects()
@@ -68,9 +78,15 @@ export default function EnterResults() {
 
   useEffect(() => {
     if (user) {
-      fetchStudents()
+      fetchCenters()
     }
   }, [user])
+
+  useEffect(() => {
+    if (user && selectedCenter) {
+      fetchStudents()
+    }
+  }, [user, selectedCenter])
 
   useEffect(() => {
     filterStudents()
@@ -112,12 +128,35 @@ export default function EnterResults() {
     }
   }
 
-  const fetchStudents = async () => {
+  const fetchCenters = async () => {
     if (!user) return
 
     try {
+      const response = await fetch(`/api/centers?chapterId=${user.chapterId}`)
+      if (response.ok) {
+        const centersData = await response.json()
+        setCenters(centersData)
+      } else {
+        throw new Error("Failed to fetch centers")
+      }
+    } catch (error) {
+      console.error("Error fetching centers:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load centers",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+  const fetchStudents = async () => {
+    if (!user || !selectedCenter) return
+
+    setLoadingStudents(true)
+    try {
       const token = localStorage.getItem("resultEntryToken")
-      const response = await fetch(`/api/students?chapterId=${user.chapterId}`, {
+      const response = await fetch(`/api/students?chapterId=${user.chapterId}&centerId=${selectedCenter}`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -136,9 +175,7 @@ export default function EnterResults() {
         let existingResults: StudentResult[] = []
         if (resultsResponse.ok) {
           existingResults = await resultsResponse.json()
-        }
-
-        // Map students with their results
+        }        // Map students with their results
         const studentsWithResults: StudentWithResults[] = studentsData.map(student => {
           const studentResults = existingResults.filter(result => 
             result.registrationId === student.id
@@ -167,7 +204,7 @@ export default function EnterResults() {
         variant: "destructive"
       })
     } finally {
-      setLoading(false)
+      setLoadingStudents(false)
     }
   }
   const filterStudents = () => {
@@ -295,16 +332,22 @@ export default function EnterResults() {
                 Back
               </Button>
               <BookOpen className="h-6 w-6 text-blue-600 mr-2" />
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">
+              <div>                <h1 className="text-lg font-semibold text-gray-900">
                   Enter Results - {user.chapterName}
+                  {selectedCenter && (
+                    <span className="text-blue-600">
+                      {" • " + centers.find(c => c.id.toString() === selectedCenter)?.name}
+                    </span>
+                  )}
                 </h1>
                 <p className="text-sm text-gray-500">
-                  {filteredStudents.length} students
+                  {selectedCenter ? `${filteredStudents.length} students` : "Select a center to begin"}
                 </p>
               </div>
-            </div>
-            <Button onClick={saveResults} disabled={saving}>
+            </div>            <Button 
+              onClick={saveResults} 
+              disabled={saving || !selectedCenter || students.length === 0}
+            >
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -314,37 +357,83 @@ export default function EnterResults() {
             </Button>
           </div>
         </div>
-      </div>
-
-      {/* Filters */}
+      </div>      {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="bg-white rounded-lg border p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name or registration number..."
-                  value={searchTerm}                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Select Center
+              </label>
+              <Select 
+                value={selectedCenter} 
+                onValueChange={(value) => {
+                  setSelectedCenter(value)
+                  setStudents([]) // Clear students when center changes
+                  setSearchTerm("") // Clear search
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a center to view students..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {centers.map((center) => (
+                    <SelectItem key={center.id} value={center.id.toString()}>
+                      {center.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            {selectedCenter && (
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Search Students
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search by name or registration number..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-
-        {/* Results Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Users className="h-5 w-5 mr-2" />
-              Student Results Entry
-            </CardTitle>
-            <CardDescription>
-              Enter examination scores for each student and subject
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        </div>        {/* Results Table */}
+        {!selectedCenter ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Select a Center
+              </h3>
+              <p className="text-gray-500">
+                Choose a center from the dropdown above to view and enter results for students.
+              </p>
+            </CardContent>
+          </Card>
+        ) : loadingStudents ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-600 mb-4" />
+              <p className="text-gray-500">Loading students...</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Student Results Entry
+              </CardTitle>
+              <CardDescription>
+                Enter examination scores for each student and subject
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>                  <TableRow>
@@ -407,15 +496,14 @@ export default function EnterResults() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
-
-            {filteredStudents.length === 0 && (
+            </div>            {filteredStudents.length === 0 && selectedCenter && !loadingStudents && (
               <div className="text-center py-8 text-gray-500">
                 No students found matching your criteria
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

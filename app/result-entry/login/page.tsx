@@ -68,17 +68,15 @@ export default function ResultEntryLoginPage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             NAPPS Results Portal
-          </h1>
-          <p className="text-gray-600">
-            Enter examination results for your chapter
+          </h1>          <p className="text-gray-600">
+            Enter examination results for your center
           </p>
         </div>
 
         <Card className="shadow-lg border-0">
           <CardHeader className="text-center">
-            <CardTitle>Result Entry Login</CardTitle>
-            <CardDescription>
-              Sign in with your chapter-specific credentials
+            <CardTitle>Result Entry Login</CardTitle>            <CardDescription>
+              Sign in with your center-specific credentials
             </CardDescription>
           </CardHeader>
           <CardContent>
