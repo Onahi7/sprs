@@ -106,6 +106,10 @@ export function CoordinatorStudentRegistrationForm() {
   } | null>(null)
   const [validatingSlots, setValidatingSlots] = useState(false)
 
+  // Add submission tracking to prevent duplicate submissions
+  const [submissionInProgress, setSubmissionInProgress] = useState(false)
+  const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0)
+
   const totalSteps = 4
 
   // Fetch coordinator's chapter and related data
@@ -349,6 +353,11 @@ export function CoordinatorStudentRegistrationForm() {
       return
     }
 
+    // Prevent multiple simultaneous submissions
+    if (submitting || submissionInProgress) {
+      return
+    }
+
     // Validate slots before submission
     const hasValidSlots = await validateSlots()
     if (!hasValidSlots) {
@@ -371,9 +380,24 @@ export function CoordinatorStudentRegistrationForm() {
       }
     }
 
+    await submitRegistration()
+  }
+
+  const submitRegistration = async () => {
+    // Prevent rapid successive submissions (debounce for 3 seconds)
+    const now = Date.now()
+    if (submissionInProgress || (now - lastSubmissionTime) < 3000) {
+      console.log('⚠️ Submission prevented: too rapid or already in progress')
+      return
+    }
+
+    setSubmissionInProgress(true)
+    setLastSubmissionTime(now)
+
     try {
       setSubmitting(true)
-        const response = await fetch('/api/coordinator/register', {
+      setSubmissionInProgress(true)
+      const response = await fetch('/api/coordinator/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -396,6 +420,16 @@ export function CoordinatorStudentRegistrationForm() {
           })
           return
         }
+        
+        if (data.code === "DUPLICATE_SUBMISSION") {
+          toast({
+            title: "Duplicate Submission Detected",
+            description: `This student appears to have been registered recently (${data.existingRegistration}). Please check your registrations.`,
+            variant: "destructive"
+          })
+          return
+        }
+        
         throw new Error(data.error || 'Registration failed')
       }      toast({
         title: "Registration Successful!",
@@ -417,6 +451,7 @@ export function CoordinatorStudentRegistrationForm() {
         variant: "destructive"
       })    } finally {
       setSubmitting(false)
+      setSubmissionInProgress(false)
     }
   }
 
@@ -424,8 +459,8 @@ export function CoordinatorStudentRegistrationForm() {
   const handleDuplicateConfirm = () => {
     setDuplicateConfirmed(true)
     setShowDuplicateDialog(false)
-    // Re-trigger submission
-    handleSubmit()
+    // Continue with submission after duplicate confirmation
+    submitRegistration()
   }
 
   const handleDuplicateCancel = () => {

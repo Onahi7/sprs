@@ -41,6 +41,7 @@ export async function GET(request: Request) {
         centerId: supervisors.centerId,
         name: supervisors.name,
         phoneNumber: supervisors.phoneNumber,
+        schoolName: supervisors.schoolName,
         isActive: supervisors.isActive,
         createdAt: supervisors.createdAt,
         updatedAt: supervisors.updatedAt,
@@ -56,6 +57,7 @@ export async function GET(request: Request) {
         centerId: supervisors.centerId,
         name: supervisors.name,
         phoneNumber: supervisors.phoneNumber,
+        schoolName: supervisors.schoolName,
         isActive: supervisors.isActive,
         createdAt: supervisors.createdAt,
         updatedAt: supervisors.updatedAt,
@@ -71,6 +73,7 @@ export async function GET(request: Request) {
         centerId: supervisors.centerId,
         name: supervisors.name,
         phoneNumber: supervisors.phoneNumber,
+        schoolName: supervisors.schoolName,
         isActive: supervisors.isActive,
         createdAt: supervisors.createdAt,
         updatedAt: supervisors.updatedAt,
@@ -115,9 +118,9 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { name, phoneNumber, centerId } = body
+    const { name, phoneNumber, schoolName, centerId } = body
     
-    if (!name || !phoneNumber || !centerId || !session.chapterId) {
+    if (!name || !phoneNumber || !schoolName || !centerId || !session.chapterId) {
       return new NextResponse(JSON.stringify({
         error: "Missing required fields"
       }), {
@@ -151,6 +154,7 @@ export async function POST(request: Request) {
       centerId,
       name,
       phoneNumber,
+      schoolName,
       isActive: true
     }).returning().execute()
     
@@ -189,9 +193,9 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json()
-    const { id, name, phoneNumber } = body
+    const { id, name, phoneNumber, schoolName } = body
     
-    if (!id || !name || !phoneNumber) {
+    if (!id || !name || !phoneNumber || !schoolName) {
       return new NextResponse(JSON.stringify({
         error: "Missing required fields"
       }), {
@@ -206,6 +210,7 @@ export async function PUT(request: Request) {
       .set({ 
         name, 
         phoneNumber,
+        schoolName,
         updatedAt: new Date()
       })
       .where(and(

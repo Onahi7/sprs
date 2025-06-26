@@ -29,7 +29,19 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith("/api/testimonials") ||
     req.nextUrl.pathname.startsWith("/api/auth") ||
     req.nextUrl.pathname.startsWith("/api/admin/login") ||
-    req.nextUrl.pathname.startsWith("/api/coordinator/login");
+    req.nextUrl.pathname.startsWith("/api/coordinator/login") ||
+    req.nextUrl.pathname.startsWith("/api/supervisor") ||
+    req.nextUrl.pathname.startsWith("/supervisor/login") ||
+    // Static assets
+    req.nextUrl.pathname.endsWith(".svg") ||
+    req.nextUrl.pathname.endsWith(".png") ||
+    req.nextUrl.pathname.endsWith(".jpg") ||
+    req.nextUrl.pathname.endsWith(".jpeg") ||
+    req.nextUrl.pathname.endsWith(".gif") ||
+    req.nextUrl.pathname.endsWith(".ico") ||
+    req.nextUrl.pathname.endsWith(".css") ||
+    req.nextUrl.pathname.endsWith(".js") ||
+    req.nextUrl.pathname.endsWith(".map");
   
   console.log("Middleware: Is public page?", isPublicPage)
 
@@ -67,6 +79,14 @@ export async function middleware(req: NextRequest) {
   
   const role = decodedToken?.role
   const isAuthPage = req.nextUrl.pathname.startsWith("/auth/login")
+  const isSupervisorRoute = req.nextUrl.pathname.startsWith("/supervisor")
+  
+  // Handle supervisor routes separately (they have their own authentication)
+  if (isSupervisorRoute) {
+    console.log("Middleware: Supervisor route detected, allowing access")
+    return NextResponse.next()
+  }
+  
   // Only redirect unauthenticated users to login page if they're trying to access protected pages
   if (!isAuth && !isAuthPage && !isPublicPage) {
     console.log(`Middleware: User not authenticated, redirecting to login from ${req.nextUrl.pathname}`)

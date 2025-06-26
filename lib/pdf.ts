@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 import { formatDate } from "@/lib/utils";
 
 interface RegistrationData {
@@ -470,256 +471,388 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
       format: 'a4'
     });
 
-    // Color scheme
-    const nappsGreen = [0, 128, 55] as const;
-    const primaryText = [33, 37, 41] as const;
-    const secondaryText = [108, 117, 125] as const;
-    const redText = [220, 53, 69] as const;
+    // Professional color scheme matching the screenshot exactly
+    const nappsGreen = [34, 139, 34] as const; // Forest green from screenshot
+    const headerGreen = [46, 82, 51] as const; // Dark green for header
+    const nappsGold = [255, 215, 0] as const; // Gold accents
+    const primaryText = [0, 0, 0] as const; // Pure black text
+    const secondaryText = [68, 68, 68] as const; // Dark gray
+    const lightGreen = [177, 218, 177] as const; // Light green for photo placeholder
+    const redText = [211, 47, 47] as const; // Red for exam date
     const white = [255, 255, 255] as const;
-    const lightGray = [248, 249, 250] as const;
-    const borderColor = [0, 0, 0] as const;
+    const tableHeaderGreen = [60, 118, 61] as const; // Table header green
+    const evenRowColor = [248, 248, 248] as const; // Light gray for even rows
+    const yellowRowColor = [255, 255, 224] as const; // Light yellow for highlighted row
+    const borderColor = [200, 200, 200] as const; // Subtle borders
+    const shadowColor = [0, 0, 0, 0.1] as const; // Shadow effect
+    const boxHeaderGray = [180, 180, 180] as const; // Box headers
 
-    // Set clean white background
+    // Set clean background
     doc.setFillColor(...white);
     doc.rect(0, 0, 210, 297, 'F');
 
-    let yPos = 15;
-
-    // Main border
-    doc.setDrawColor(...borderColor);
-    doc.setLineWidth(2);
-    doc.rect(10, 10, 190, 270);
-
-    // Header section with border
-    doc.setLineWidth(1);
-    doc.rect(15, 15, 180, 50);
-
-    // Logo area (left side)
-    const logoX = 20;
-    const logoY = 20;
-    const logoSize = 20;
+    // Professional card-style container with shadow effect
+    const cardX = 20;
+    const cardY = 15;
+    const cardWidth = 170;
+    const cardHeight = 260;
     
-    // Simplified logo placeholder
-    doc.setFillColor(...nappsGreen);
-    doc.circle(logoX + logoSize/2, logoY + logoSize/2, 8, 'F');
+    // Drop shadow effect (multiple rectangles with increasing transparency)
+    for (let i = 0; i < 3; i++) {
+      doc.setFillColor(220 - i * 20, 220 - i * 20, 220 - i * 20);
+      doc.roundedRect(cardX + i + 1, cardY + i + 1, cardWidth, cardHeight, 4, 4, 'F');
+    }
+    
+    // Main card background
+    doc.setFillColor(...white);
+    doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 4, 4, 'F');
+      // Watermark - professional and subtle
+    doc.setTextColor(240, 240, 240); // Very light gray
+    doc.setFontSize(45);
+    doc.setFont('helvetica', 'bold');
+    const watermarkX = cardX + cardWidth/2;
+    const watermarkY = cardY + cardHeight/2;
+    doc.text('NAPPS Nasarawa State', watermarkX, watermarkY, { 
+      angle: -45, 
+      align: 'center'
+    });
+
+    // Header section with professional circular logo design
+    let yPos = cardY + 10;    
+    // Professional NAPPS Logo Circle (matching screenshot)
+    const logoX = cardX + 15;
+    const logoY = yPos;
+    const logoSize = 25;
+    
+    try {
+      // Load the actual NAPPS logo from Cloudinary
+      const logoUrl = 'https://res.cloudinary.com/dbbzy6j4s/image/upload/v1749089475/sprs_passports/sprs_passports/passport_Hji2hREF.png';
+      const logoBase64 = await imageUrlToBase64(logoUrl);
+      
+      // Create circular background for logo
+      doc.setFillColor(...white);
+      doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 2, 'F');
+      doc.setDrawColor(...nappsGreen);
+      doc.setLineWidth(2);
+      doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 2, 'S');
+      
+      // Add the logo image
+      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoSize, logoSize);
+      
+    } catch (error) {
+      console.warn('Could not load logo, using professional fallback:', error);
+      // Professional circular logo design
+      doc.setFillColor(...nappsGreen);
+      doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 'F');
+      
+      // Inner details
+      doc.setFillColor(...nappsGold);
+      doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 - 3, 'F');
+      
+      // Center text
+      doc.setTextColor(...nappsGreen);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('NAPPS', logoX + logoSize/2, logoY + logoSize/2 + 2, { align: 'center' });
+    }
+
+    // Header text (professional typography)
+    const headerX = logoX + logoSize + 10;
+    doc.setTextColor(...primaryText);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NAPPS NASARAWA STATE CHAPTER', headerX, yPos + 8);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Besides SALAMATU Hall Lafia, Jos Road', headerX, yPos + 14);
+    doc.text('Napps Nasarawa State Unified Certificate Examination', headerX, yPos + 18);
+    doc.text('(NNSUCE-2024)', headerX, yPos + 22);
+
+    yPos += 35;
+
+    // Result Slip Header Bar
+    doc.setFillColor(...tableHeaderGreen);
+    doc.roundedRect(cardX + 5, yPos, cardWidth - 10, 8, 2, 2, 'F');
     doc.setTextColor(...white);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('N', logoX + logoSize/2, logoY + logoSize/2 + 2, { align: 'center' });
-
-    // Organization header (center-left)
-    yPos = 25;
-    doc.setTextColor(...primaryText);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('NAPPS NASARAWA STATE CHAPTER', 50, yPos);
+    doc.text('RESULT SLIP', cardX + cardWidth/2, yPos + 5.5, { align: 'center' });
     
-    yPos += 5;
+    yPos += 12;
+
+    // Exam Date (red text, right aligned)
+    doc.setTextColor(...redText);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Besides SALAMATU Hall Lafia, Jos Road', 50, yPos);
-    
-    yPos += 4;
-    doc.text('Napps Nasarawa State Unified Certificate Examination', 50, yPos);
-    
-    yPos += 4;
-    doc.text('(NNSUCE-2024)', 50, yPos);
-
-    // Result Slip title and date (right side)
-    doc.setTextColor(...redText);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RESULT SLIP', 170, 30, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.text('Exam Date: 08/06/24', 170, 40, { align: 'center' });
-
-    // Candidate Details section
-    yPos = 75;
+    doc.text('Exam Date: 06/06/24', cardX + cardWidth - 10, yPos + 5, { align: 'right' });
+      // Candidate Details Section
     doc.setTextColor(...primaryText);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Candidate Details', 20, yPos);
+    doc.text('Candidate Details', cardX + 10, yPos);
+      
+    yPos += 15;
 
-    // Student information (left side)
-    yPos += 10;
-    const infoX = 20;
+    // Student information with professional spacing
+    const infoX = cardX + 10;
     
     const addInfoRow = (label: string, value: string, y: number) => {
-      doc.setTextColor(...secondaryText);
+      doc.setTextColor(...primaryText);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text(label, infoX, y);
+      doc.text(`${label}:`, infoX, y);
       
-      doc.setTextColor(...primaryText);
+      doc.setTextColor(...secondaryText);
       doc.setFont('helvetica', 'normal');
       doc.text(value, infoX + 45, y);
     };
 
-    const fullName = `${resultData.student.firstName} ${resultData.student.lastName}`.toUpperCase();
+    const fullName = `${resultData.student.firstName} ${resultData.student.middleName || ''} ${resultData.student.lastName}`.trim().toUpperCase();
     
-    addInfoRow('Student Name:', fullName, yPos);
-    yPos += 8;
+    addInfoRow('Student Name', fullName, yPos);
+    yPos += 6;
     
-    addInfoRow('Registration Number:', resultData.student.registrationNumber, yPos);
-    yPos += 8;
+    addInfoRow('Registration Number', resultData.student.registrationNumber, yPos);
+    yPos += 6;
     
-    addInfoRow('Center Name:', resultData.student.centerName, yPos);
-    yPos += 8;
+    addInfoRow('Center Name', resultData.student.centerName, yPos);
+    yPos += 6;
     
-    addInfoRow('School Name:', resultData.student.schoolName, yPos);
+    addInfoRow('School Name', resultData.student.schoolName, yPos);
 
-    // Student photo (right side)
-    const photoX = 150;
-    const photoY = 85;
+    // Student photo (professional styling matching screenshot)
+    const photoX = cardX + cardWidth - 45;
+    const photoY = yPos - 20;
     const photoWidth = 30;
-    const photoHeight = 40;
+    const photoHeight = 35;
     
     if (resultData.student.passportUrl) {
       try {
         const base64Image = await imageUrlToBase64(resultData.student.passportUrl);
+        // Photo background with slight shadow
+        doc.setFillColor(240, 240, 240);
+        doc.roundedRect(photoX - 1, photoY - 1, photoWidth + 2, photoHeight + 2, 2, 2, 'F');
         doc.addImage(base64Image, 'JPEG', photoX, photoY, photoWidth, photoHeight);
+        doc.setDrawColor(...borderColor);
+        doc.setLineWidth(1);
+        doc.roundedRect(photoX, photoY, photoWidth, photoHeight, 2, 2, 'S');
       } catch (error) {
-        // Fallback placeholder
-        doc.setFillColor(...lightGray);
-        doc.rect(photoX, photoY, photoWidth, photoHeight, 'F');
+        console.warn('Could not load passport image:', error);
+        // Professional placeholder matching screenshot
+        doc.setFillColor(...lightGreen);
+        doc.roundedRect(photoX, photoY, photoWidth, photoHeight, 2, 2, 'F');
+        doc.setDrawColor(...borderColor);
+        doc.setLineWidth(1);
+        doc.roundedRect(photoX, photoY, photoWidth, photoHeight, 2, 2, 'S');
       }
     } else {
-      // Placeholder
-      doc.setFillColor(...lightGray);
-      doc.rect(photoX, photoY, photoWidth, photoHeight, 'F');
+      // Professional placeholder matching screenshot
+      doc.setFillColor(...lightGreen);
+      doc.roundedRect(photoX, photoY, photoWidth, photoHeight, 2, 2, 'F');
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(1);
+      doc.roundedRect(photoX, photoY, photoWidth, photoHeight, 2, 2, 'S');
     }
-    
-    doc.setDrawColor(...borderColor);
-    doc.setLineWidth(1);
-    doc.rect(photoX, photoY, photoWidth, photoHeight);
 
-    // Subjects table
-    yPos = 140;
+    yPos += 25;
+
+    // Professional Results Table (exactly matching screenshot)
+    const tableX = cardX + 10;
+    const tableWidth = cardWidth - 20;
+    const subjectColWidth = tableWidth * 0.75;
+    const scoreColWidth = tableWidth * 0.25;
     
-    // Table header
-    const tableX = 20;
-    const subjectColWidth = 100;
-    const scoreColWidth = 60;
-    
-    doc.setFillColor(...nappsGreen);
-    doc.rect(tableX, yPos, subjectColWidth, 12, 'F');
-    doc.rect(tableX + subjectColWidth, yPos, scoreColWidth, 12, 'F');
+    // Table header with professional styling
+    doc.setFillColor(...tableHeaderGreen);
+    doc.rect(tableX, yPos, tableWidth, 10, 'F');
     
     doc.setTextColor(...white);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('SUBJECT', tableX + 5, yPos + 8);
-    doc.text('SCORE', tableX + subjectColWidth + 25, yPos + 8);
+    doc.text('SUBJECT', tableX + 8, yPos + 6.5);
+    doc.text('SCORE', tableX + subjectColWidth + scoreColWidth/2, yPos + 6.5, { align: 'center' });
     
-    // Table borders
-    doc.setDrawColor(...borderColor);
-    doc.setLineWidth(1);
-    doc.rect(tableX, yPos, subjectColWidth + scoreColWidth, 12);
+    yPos += 10;
     
-    yPos += 12;
-    
-    // Subject rows
+    // Subject rows with professional alternating colors
     resultData.subjects.forEach((subject, index) => {
       const result = resultData.results[subject.id];
-      const isEven = index % 2 === 0;
+      const rowHeight = 12;
       
-      // Row background
-      if (isEven) {
-        doc.setFillColor(240, 240, 240);
+      // Row background colors matching screenshot
+      if (index === 1) { // English row (yellow highlight)
+        doc.setFillColor(...yellowRowColor);
+      } else if (index % 2 === 0) {
+        doc.setFillColor(...evenRowColor);
       } else {
-        doc.setFillColor(255, 255, 200); // Light yellow
+        doc.setFillColor(...white);
       }
-      doc.rect(tableX, yPos, subjectColWidth + scoreColWidth, 10, 'F');
+      doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
       
-      // Row text
+      // Row content
       doc.setTextColor(...primaryText);
-      doc.setFontSize(9);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(subject.name, tableX + 8, yPos + 7.5);
+      
+      doc.setTextColor(...primaryText);
       doc.setFont('helvetica', 'bold');
-      doc.text(subject.name, tableX + 5, yPos + 7);
+      doc.text(result.score.toString(), tableX + subjectColWidth + scoreColWidth/2, yPos + 7.5, { align: 'center' });
       
-      doc.setFontSize(12);
-      doc.text(result.score.toString(), tableX + subjectColWidth + 25, yPos + 7);
+      // Subtle row separator
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.3);
+      doc.line(tableX, yPos + rowHeight, tableX + tableWidth, yPos + rowHeight);
       
-      // Row border
-      doc.setDrawColor(...borderColor);
-      doc.rect(tableX, yPos, subjectColWidth + scoreColWidth, 10);
-      
-      yPos += 10;
+      yPos += rowHeight;
     });
 
-    // Total and Position
-    yPos += 15;
-    
-    // Total box
-    doc.setFillColor(200, 200, 200);
-    doc.rect(30, yPos, 40, 15, 'F');
-    doc.setDrawColor(...borderColor);
-    doc.rect(30, yPos, 40, 15);
-    
-    doc.setTextColor(...primaryText);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL', 35, yPos + 6);
-    doc.setFontSize(14);
-    doc.text(resultData.totalScore.toString(), 50, yPos + 12);
-
-    // Position box (if available)
-    if (resultData.centerPosition && resultData.centerPosition > 0) {
-      doc.setFillColor(200, 200, 200);
-      doc.rect(120, yPos, 50, 15, 'F');
-      doc.setDrawColor(...borderColor);
-      doc.rect(120, yPos, 50, 15);
-      
-      doc.setFontSize(11);
-      doc.text('Center Position', 125, yPos + 6);
-      doc.setFontSize(14);
-      const ordinal = getOrdinalSuffix(resultData.centerPosition);
-      doc.text(`${resultData.centerPosition}${ordinal}`, 145, yPos + 12);
-    }
-
-    // Signature section
-    yPos += 40;
-    
-    // Signature line
+    // Table border
     doc.setDrawColor(...borderColor);
     doc.setLineWidth(1);
-    doc.line(30, yPos, 80, yPos);
+    doc.rect(tableX, yPos - (resultData.subjects.length * 12) - 10, tableWidth, (resultData.subjects.length * 12) + 10);
+
+    yPos += 20;
+
+    // Professional Summary Boxes (matching screenshot exactly)
+    const boxY = yPos;
+    const boxHeight = 15;
+    const spacing = 20;
     
-    yPos += 5;
+    // Total Box
+    const totalBoxX = tableX + 20;
+    const totalBoxWidth = 60;
+    
+    // Box header
+    doc.setFillColor(...boxHeaderGray);
+    doc.rect(totalBoxX, boxY, totalBoxWidth, 6, 'F');
     doc.setTextColor(...primaryText);
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Opah Omaku Ogan', 55, yPos, { align: 'center' });
+    doc.text('TOTAL', totalBoxX + totalBoxWidth/2, boxY + 4, { align: 'center' });
+    
+    // Box value
+    doc.setFillColor(...white);
+    doc.rect(totalBoxX, boxY + 6, totalBoxWidth, boxHeight - 6, 'F');
+    doc.setTextColor(...primaryText);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(resultData.totalScore.toString(), totalBoxX + totalBoxWidth/2, boxY + 12, { align: 'center' });
+    
+    // Box border
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(1);
+    doc.rect(totalBoxX, boxY, totalBoxWidth, boxHeight);
+
+    // Center Position Box (if available)
+    if (resultData.centerPosition && resultData.centerPosition > 0) {
+      const positionBoxX = totalBoxX + totalBoxWidth + spacing;
+      const positionBoxWidth = 70;
+      
+      // Box header
+      doc.setFillColor(...boxHeaderGray);
+      doc.rect(positionBoxX, boxY, positionBoxWidth, 6, 'F');
+      doc.setTextColor(...primaryText);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Center Position', positionBoxX + positionBoxWidth/2, boxY + 4, { align: 'center' });
+      
+      // Box value
+      doc.setFillColor(...white);
+      doc.rect(positionBoxX, boxY + 6, positionBoxWidth, boxHeight - 6, 'F');
+      doc.setTextColor(...primaryText);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      const ordinal = getOrdinalSuffix(resultData.centerPosition);
+      doc.text(`${resultData.centerPosition}${ordinal}`, positionBoxX + positionBoxWidth/2, boxY + 12, { align: 'center' });
+      
+      // Box border
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(1);
+      doc.rect(positionBoxX, boxY, positionBoxWidth, boxHeight);
+    }
+
+    yPos += 35;
+
+    // Signature Section (professional styling)
+    const signatureX = tableX + 10;
+    
+    // Signature name
+    doc.setTextColor(...primaryText);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Ogah Omaha Ogah', signatureX, yPos);
     
     yPos += 4;
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('State Chairman', 55, yPos, { align: 'center' });
-
-    // Barcode area
-    const barcodeX = 120;
-    const barcodeY = yPos - 25;
+    doc.setFont('helvetica', 'bold');
+    doc.text('State Chairman', signatureX, yPos);
     
-    // Simple barcode representation
-    doc.setFillColor(...primaryText);
-    for (let i = 0; i < 15; i++) {
-      const barWidth = Math.random() > 0.5 ? 1 : 2;
-      const barHeight = 20;
-      doc.rect(barcodeX + (i * 3), barcodeY, barWidth, barHeight, 'F');
+    // Signature line
+    doc.setDrawColor(...primaryText);
+    doc.setLineWidth(1);
+    doc.line(signatureX, yPos + 3, signatureX + 40, yPos + 3);
+
+    // Professional QR Code (positioned like barcode in screenshot)
+    const qrX = tableX + 80;
+    const qrY = yPos - 15;
+    const qrSize = 25;
+    
+    try {
+      // Generate QR code with professional styling
+      const qrData = JSON.stringify({
+        regNumber: resultData.student.registrationNumber,
+        student: resultData.student.firstName + ' ' + resultData.student.lastName,
+        totalScore: resultData.totalScore,
+        grade: resultData.overallGrade,
+        verifyUrl: `https://portal.nappsnasarawa.com/verify/${resultData.student.registrationNumber}`
+      });
+      
+      const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+        width: 200,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      
+      // QR code background
+      doc.setFillColor(...white);
+      doc.rect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 'F');
+      
+      doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+      
+      // QR code border
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(0.5);
+      doc.rect(qrX, qrY, qrSize, qrSize);
+      
+      // Barcode-style lines below QR code (matching screenshot)
+      doc.setFillColor(...primaryText);
+      for (let i = 0; i < 30; i++) {
+        const lineX = qrX + (i * 0.8);
+        const lineWidth = 0.4;
+        const lineHeight = 3;
+        doc.rect(lineX, qrY + qrSize + 2, lineWidth, lineHeight, 'F');
+      }
+      
+    } catch (error) {
+      console.warn('Could not generate QR code, using professional fallback:', error);
+      // Professional fallback barcode
+      doc.setFillColor(...primaryText);
+      for (let i = 0; i < 25; i++) {
+        const barWidth = (i % 3 === 0) ? 1 : 0.5;
+        const barHeight = qrSize;
+        const gap = 0.3;
+        doc.rect(qrX + (i * (barWidth + gap)), qrY, barWidth, barHeight, 'F');
+      }
+      
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(0.5);
+      doc.rect(qrX - 1, qrY - 1, qrSize + 2, qrSize + 2);
     }
-    
-    doc.setFontSize(7);
-    doc.text(resultData.student.registrationNumber, barcodeX + 22, barcodeY + 25, { align: 'center' });
-
-    // Footer
-    yPos = 260;
-    doc.setTextColor(...secondaryText);
-    doc.setFontSize(8);
-    doc.text('This is an official document of NAPPS Nasarawa State Chapter', 105, yPos, { align: 'center' });
-    
-    yPos += 5;
-    doc.text('For verification or inquiries, contact the examination body', 105, yPos, { align: 'center' });
 
     // Convert to buffer
     const pdfOutput = doc.output('arraybuffer');

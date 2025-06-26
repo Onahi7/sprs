@@ -152,17 +152,50 @@ export const supervisors = pgTable("supervisors", {
   centerId: integer("center_id").references(() => centers.id),
   name: text("name").notNull(),
   phoneNumber: text("phone_number").notNull(),
+  schoolName: text("school_name"),
+  pin: text("pin"), // 4-6 digit PIN for login
+  lastLogin: timestamp("last_login"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// Settings model
-export const settings = pgTable("settings", {
-  key: text("key").primaryKey(),
-  value: text("value"),
+// Exam Sessions model (defines when papers are scheduled)
+export const examSessions = pgTable("exam_sessions", {
+  id: serial("id").primaryKey(),
+  subjectId: integer("subject_id").references(() => subjects.id),
+  sessionDate: timestamp("session_date").notNull(),
+  startTime: text("start_time").notNull(), // e.g., "09:00"
+  endTime: text("end_time").notNull(), // e.g., "11:00"
+  sessionName: text("session_name").notNull(), // e.g., "Morning Session", "Paper 1"
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
+})
+
+// Student Attendance model (tracks attendance per student per exam session)
+export const studentAttendance = pgTable("student_attendance", {
+  id: serial("id").primaryKey(),
+  registrationId: integer("registration_id").references(() => registrations.id),
+  examSessionId: integer("exam_session_id").references(() => examSessions.id),
+  supervisorId: integer("supervisor_id").references(() => supervisors.id),
+  centerId: integer("center_id").references(() => centers.id),
+  attendanceStatus: text("attendance_status", { 
+    enum: ["present", "absent", "late", "left_early"] 
+  }).default("absent"),
+  arrivalTime: timestamp("arrival_time"),
+  departureTime: timestamp("departure_time"),
+  notes: text("notes"), // Any special notes about the student
+  markedAt: timestamp("marked_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Supervisor Sessions model (tracks supervisor login sessions)
+export const supervisorSessions = pgTable("supervisor_sessions", {
+  id: serial("id").primaryKey(),
+  supervisorId: integer("supervisor_id").references(() => supervisors.id),
+  sessionToken: text("session_token").unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 })
 
 // Subject model
@@ -201,6 +234,14 @@ export const studentResults = pgTable("student_results", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
+// Settings model
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
 // Define relations
 export const chaptersRelations = relations(chapters, ({ many }) => ({
   schools: many(schools),
@@ -230,6 +271,7 @@ export const centersRelations = relations(centers, ({ one, many }) => ({
   registrations: many(registrations),
   supervisors: many(supervisors),
   resultEntryUsers: many(resultEntryUsers),
+  attendanceRecords: many(studentAttendance),
 }))
 
 export const chapterCoordinatorsRelations = relations(chapterCoordinators, ({ one, many }) => ({
@@ -315,9 +357,10 @@ export const registrationsRelations = relations(registrations, ({ one, many }) =
   }),
   results: many(studentResults),
   slotUsageHistory: many(slotUsageHistory),
+  attendanceRecords: many(studentAttendance),
 }))
 
-export const supervisorsRelations = relations(supervisors, ({ one }) => ({
+export const supervisorsRelations = relations(supervisors, ({ one, many }) => ({
   chapter: one(chapters, {
     fields: [supervisors.chapterId],
     references: [chapters.id],
@@ -326,10 +369,47 @@ export const supervisorsRelations = relations(supervisors, ({ one }) => ({
     fields: [supervisors.centerId],
     references: [centers.id],
   }),
+  attendanceRecords: many(studentAttendance),
+  sessions: many(supervisorSessions),
+}))
+
+export const examSessionsRelations = relations(examSessions, ({ one, many }) => ({
+  subject: one(subjects, {
+    fields: [examSessions.subjectId],
+    references: [subjects.id],
+  }),
+  attendanceRecords: many(studentAttendance),
+}))
+
+export const studentAttendanceRelations = relations(studentAttendance, ({ one }) => ({
+  registration: one(registrations, {
+    fields: [studentAttendance.registrationId],
+    references: [registrations.id],
+  }),
+  examSession: one(examSessions, {
+    fields: [studentAttendance.examSessionId],
+    references: [examSessions.id],
+  }),
+  supervisor: one(supervisors, {
+    fields: [studentAttendance.supervisorId],
+    references: [supervisors.id],
+  }),
+  center: one(centers, {
+    fields: [studentAttendance.centerId],
+    references: [centers.id],
+  }),
+}))
+
+export const supervisorSessionsRelations = relations(supervisorSessions, ({ one }) => ({
+  supervisor: one(supervisors, {
+    fields: [supervisorSessions.supervisorId],
+    references: [supervisors.id],
+  }),
 }))
 
 export const subjectsRelations = relations(subjects, ({ many }) => ({
   results: many(studentResults),
+  examSessions: many(examSessions),
 }))
 
 export const resultEntryUsersRelations = relations(resultEntryUsers, ({ one, many }) => ({

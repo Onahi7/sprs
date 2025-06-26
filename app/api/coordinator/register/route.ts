@@ -65,7 +65,8 @@ export async function POST(request: Request) {
     }
 
     // Generate registration number - Format: NAPPS-XXXXXXYY (X=timestamp digits, Y=random letters)
-    const registrationNumber = `NAPPS-${Date.now().toString().slice(-6)}${nanoid(2).toUpperCase()}`
+    // Use more random characters and include coordinator ID for better uniqueness
+    const registrationNumber = `NAPPS-${Date.now().toString().slice(-6)}${coordinatorId.toString().slice(-2)}${nanoid(3).toUpperCase()}`
 
     // Handle school resolution and auto-creation
     let schoolId = data.schoolId
@@ -99,6 +100,33 @@ export async function POST(request: Request) {
         
         schoolId = newSchoolResult[0].id
         console.log(`✅ Auto-created school "${schoolName}" for chapter ${data.chapterId}`)
+      }
+    }    // Check for recent duplicate submissions by this coordinator (within last 10 seconds)
+    const recentSubmissions = await db
+      .select()
+      .from(registrations)
+      .where(
+        and(
+          eq(registrations.coordinatorRegisteredBy, coordinatorId),
+          eq(registrations.firstName, data.firstName),
+          eq(registrations.lastName, data.lastName),
+          eq(registrations.chapterId, data.chapterId)
+        )
+      )
+      .limit(1)
+
+    // Check if there's a very recent submission (last 10 seconds) with same details
+    if (recentSubmissions.length > 0) {
+      const lastSubmission = recentSubmissions[0]
+      if (lastSubmission.createdAt) {
+        const timeDiff = Date.now() - new Date(lastSubmission.createdAt).getTime()
+        if (timeDiff < 10000) { // 10 seconds
+          return NextResponse.json({ 
+            error: "Duplicate submission detected. Please wait before trying again.",
+            code: "DUPLICATE_SUBMISSION",
+            existingRegistration: lastSubmission.registrationNumber
+          }, { status: 409 })
+        }
       }
     }    // Insert registration with coordinator-specific fields
     const result = await db.insert(registrations).values({

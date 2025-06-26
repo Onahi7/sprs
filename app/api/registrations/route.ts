@@ -33,8 +33,9 @@ export async function POST(request: Request) {  try {
       return NextResponse.json({ error: "Either schoolId or schoolName is required" }, { status: 400 })
     }
 
-    // Generate registration number - Format: NAPPS-XXXXXXYY (X=timestamp digits, Y=random letters)
-    const registrationNumber = `NAPPS-${Date.now().toString().slice(-6)}${nanoid(2).toUpperCase()}`
+    // Generate registration number - Format: NAPPS-XXXXXXYYY (X=timestamp digits, Y=random letters)
+    // Use more random characters for better uniqueness
+    const registrationNumber = `NAPPS-${Date.now().toString().slice(-6)}${nanoid(4).toUpperCase()}`
 
     // Handle school resolution and auto-creation
     let schoolId = data.schoolId

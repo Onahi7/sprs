@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { User, Phone, Building2, Edit, Trash2, Plus } from "lucide-react"
+import { User, Phone, Building2, Edit, Trash2, Plus, GraduationCap } from "lucide-react"
 
 interface Supervisor {
   id: number
@@ -18,6 +18,7 @@ interface Supervisor {
   centerId: number
   name: string
   phoneNumber: string
+  schoolName?: string
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -40,6 +41,7 @@ export function SupervisorsManagement() {
   const [formData, setFormData] = useState({
     name: "",
     phoneNumber: "",
+    schoolName: "",
     centerId: ""
   })
 
@@ -83,7 +85,7 @@ export function SupervisorsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.name || !formData.phoneNumber || (!formData.centerId && !editingSupervisor)) {
+    if (!formData.name || !formData.phoneNumber || !formData.schoolName || (!formData.centerId && !editingSupervisor)) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -118,7 +120,7 @@ export function SupervisorsManagement() {
         })
         setIsDialogOpen(false)
         setEditingSupervisor(null)
-        setFormData({ name: "", phoneNumber: "", centerId: "" })
+        setFormData({ name: "", phoneNumber: "", schoolName: "", centerId: "" })
         fetchSupervisors()
       } else {
         const error = await response.json()
@@ -142,6 +144,7 @@ export function SupervisorsManagement() {
     setFormData({
       name: supervisor.name,
       phoneNumber: supervisor.phoneNumber,
+      schoolName: supervisor.schoolName || "",
       centerId: supervisor.centerId.toString()
     })
     setIsDialogOpen(true)
@@ -189,7 +192,7 @@ export function SupervisorsManagement() {
   }
 
   const resetForm = () => {
-    setFormData({ name: "", phoneNumber: "", centerId: "" })
+    setFormData({ name: "", phoneNumber: "", schoolName: "", centerId: "" })
     setEditingSupervisor(null)
   }
 
@@ -274,6 +277,17 @@ export function SupervisorsManagement() {
                     />
                   </div>
                   
+                  <div className="space-y-2">
+                    <Label htmlFor="schoolName">School Name</Label>
+                    <Input
+                      id="schoolName"
+                      value={formData.schoolName}
+                      onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
+                      placeholder="Enter school name"
+                      required
+                    />
+                  </div>
+                  
                   {!editingSupervisor && (
                     <div className="space-y-2">
                       <Label htmlFor="center">Center</Label>
@@ -345,6 +359,12 @@ export function SupervisorsManagement() {
                         <Phone className="h-3 w-3 mr-1" />
                         {supervisor.phoneNumber}
                       </div>
+                      {supervisor.schoolName && (
+                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                          <GraduationCap className="h-3 w-3 mr-1" />
+                          {supervisor.schoolName}
+                        </div>
+                      )}
                       <div className="flex items-center text-sm text-gray-600 mt-1">
                         <Building2 className="h-3 w-3 mr-1" />
                         {supervisor.centerName || `Center ${supervisor.centerId}`}
