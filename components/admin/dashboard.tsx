@@ -9,6 +9,7 @@ import { AdminChart } from "./admin-chart"
 import { AdminRegistrationsTable } from "./admin-registrations-table"
 import { AdminResultsManagement } from "./admin-results-management"
 import { SplitCodeManagement } from "./split-code-management"
+import { RegistrationManagementWidget } from "./registration-management-widget"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -261,6 +262,9 @@ export function AdminDashboard() {
           </TabsTrigger>
         </TabsList>
           <TabsContent value="overview" className="space-y-4">
+          {/* Registration Management Widget - Featured */}
+          <RegistrationManagementWidget />
+          
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>

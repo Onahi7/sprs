@@ -24,8 +24,15 @@ export default function SupervisorLayout({
   const { toast } = useToast()
   const [supervisor, setSupervisor] = useState<SupervisorData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
     const token = localStorage.getItem('supervisor_token')
     const supervisorData = localStorage.getItem('supervisor_data')
 
@@ -43,7 +50,7 @@ export default function SupervisorLayout({
     }
 
     setLoading(false)
-  }, [router])
+  }, [router, mounted])
 
   const handleLogout = async () => {
     try {
@@ -66,7 +73,7 @@ export default function SupervisorLayout({
     }
   }
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
