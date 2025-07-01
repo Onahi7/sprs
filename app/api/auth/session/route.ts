@@ -9,42 +9,10 @@ export async function GET() {
     const session = await getSession()
     
     if (!session) {
-      return NextResponse.json({ user: null })
+      return NextResponse.json({ session: null })
     }
     
-    let userData = null
-    
-    if (session.role === "coordinator" && session.id) {
-      const db = getDbConnection()
-      
-      // Get coordinator details
-      const coordinator = await db.query.chapterCoordinators.findFirst({
-        where: eq(chapterCoordinators.id, session.id),
-        with: {
-          chapter: true,
-        },
-      })
-      
-      if (coordinator && coordinator.chapter) {
-        userData = {
-          id: coordinator.id,
-          name: coordinator.name,
-          email: coordinator.email,
-          role: "coordinator",
-          chapterId: coordinator.chapterId,
-          chapterName: coordinator.chapter.name,
-        }
-      }
-    }
-    
-    if (session.role === "admin") {
-      userData = {
-        username: session.username,
-        role: "admin"
-      }
-    }
-    
-    return NextResponse.json({ user: userData, session })
+    return NextResponse.json({ session })
   } catch (error) {
     console.error("Error getting session:", error)
     return NextResponse.json({ error: "Failed to get session" }, { status: 500 })

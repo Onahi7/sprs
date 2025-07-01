@@ -7,13 +7,13 @@ import { Cog, X } from 'lucide-react';
 
 export function DevTools() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isProduction, setIsProduction] = useState(true);
+  const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
-    setIsProduction(process.env.NODE_ENV === 'production');
+    setMounted(true);
   }, []);
   
-  if (isProduction) {
+  if (!mounted || process.env.NODE_ENV === 'production') {
     return null;
   }
   

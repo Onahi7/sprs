@@ -9,7 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  reactStrictMode: false,
+  reactStrictMode: true,
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },

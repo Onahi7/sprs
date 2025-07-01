@@ -28,9 +28,14 @@ export function LogoutButton() {
         throw new Error("Logout failed")
       }
 
-      // Redirect to login page
-      router.push("/auth/login")
-      router.refresh()
+      // Clear any client-side storage
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
+
+      // Force a hard redirect to ensure clean state
+      window.location.href = "/auth/login"
     } catch (error) {
       console.error("Logout error:", error)
       toast({
@@ -38,7 +43,6 @@ export function LogoutButton() {
         description: "There was an error logging out. Please try again.",
         variant: "destructive",
       })
-    } finally {
       setLoading(false)
     }
   }

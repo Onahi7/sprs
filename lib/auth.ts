@@ -55,20 +55,15 @@ export interface UserSession {
  * Get the current user session from the cookies
  */
 export async function getSession(): Promise<UserSession | null> {
-  console.log("getSession: Reading cookies...")
   const cookieStore = await cookies()
   const token = cookieStore.get("auth_token")?.value
   
-  console.log("getSession: Auth token found?", !!token)
   if (!token) {
-    console.log("getSession: No token found, returning null")
     return null
   }
   
   try {
-    console.log("getSession: Verifying token...")
     const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key-change-in-production"
-    console.log("getSession: Using JWT secret:", jwtSecret.substring(0, 3) + "...")
     
     // Using jose library for Edge Runtime compatibility
     const secret = new TextEncoder().encode(jwtSecret);
@@ -76,20 +71,12 @@ export async function getSession(): Promise<UserSession | null> {
     
     const decoded = payload as unknown as UserSession & { exp: number };
     
-    console.log("getSession: Token verified successfully:", JSON.stringify({
-      username: decoded.username,
-      role: decoded.role,
-      exp: new Date(decoded.exp * 1000).toISOString()
-    }))
-    
     // Check if token is expired
     const now = Math.floor(Date.now() / 1000)
     if (decoded.exp < now) {
-      console.log("getSession: Token is expired", decoded.exp, now)
       return null
     }
     
-    console.log("getSession: Returning valid session")
     return {
       id: decoded.id,
       username: decoded.username,
@@ -98,19 +85,10 @@ export async function getSession(): Promise<UserSession | null> {
       chapterName: decoded.chapterName
     }
   } catch (error) {
-    console.error("getSession: Token verification failed:", error)
-    
-    try {
-      // Attempt to decode the token without verification to check its structure
-      const decodedWithoutVerify = JSON.parse(
-        Buffer.from(token.split('.')[1], 'base64').toString()
-      );
-      console.error("getSession: Token payload (without verification):", JSON.stringify(decodedWithoutVerify));
-    } catch (parseError) {
-      console.error("getSession: Could not parse token payload:", parseError);
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getSession: Token verification failed:", error)
     }
-    
-    console.error("getSession: Token content (first part):", token.substring(0, 10) + "...")
     return null
   }
 }
