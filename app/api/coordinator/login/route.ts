@@ -36,8 +36,9 @@ export async function POST(request: Request) {
       { expiresIn: "24h" }
     );
     
-    // Set the token in a cookie
-    cookies().set("auth_token", token, {
+    // Set the token in a cookie - await cookies() call
+    const cookieStore = await cookies()
+    cookieStore.set("auth_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

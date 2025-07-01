@@ -65,6 +65,7 @@ export async function POST(request: Request) {
     console.log("Admin login API: JWT token created successfully")
     
     // Set the token in a cookie
+    const cookieStore = await cookies()
     const response = NextResponse.json({ 
       success: true,
       message: "Login successful" 

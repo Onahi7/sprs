@@ -9,14 +9,18 @@ export async function GET(request: Request) {
     const session = await getSession()
     
     if (!session || session.role !== "coordinator") {
+      console.log("Coordinator stats: Unauthorized access attempt", { session })
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
     const { searchParams } = new URL(request.url)
     const chapterId = parseInt(searchParams.get("chapterId") || session.chapterId?.toString() || "0", 10)
     
+    console.log("Coordinator stats: Getting stats for chapter", chapterId, "Session:", session)
+    
     // Verify the coordinator has access to this chapter
     if (session.chapterId !== chapterId) {
+      console.log("Coordinator stats: Access denied - chapter mismatch", { sessionChapter: session.chapterId, requestedChapter: chapterId })
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
@@ -59,7 +63,7 @@ export async function GET(request: Request) {
       .from(centers)
       .where(eq(centers.chapterId, chapterId))
 
-    return NextResponse.json({
+    const stats = {
       totalRegistrations: totalRegistrationsResult[0].count,
       pendingPayments: pendingPaymentsResult[0].count,
       confirmedRegistrations: completedPaymentsResult[0].count,
@@ -67,7 +71,11 @@ export async function GET(request: Request) {
       totalCenters: totalCentersResult[0].count,
       chapterId,
       chapterName: chapter?.name || "Unknown Chapter",
-    })
+    }
+    
+    console.log("Coordinator stats: Returning stats", stats)
+    
+    return NextResponse.json(stats)
   } catch (error) {
     console.error("Error fetching coordinator stats:", error)
     return NextResponse.json({ error: "Failed to fetch statistics" }, { status: 500 })

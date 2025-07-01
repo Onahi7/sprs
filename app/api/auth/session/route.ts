@@ -12,7 +12,33 @@ export async function GET() {
       return NextResponse.json({ session: null })
     }
     
-    return NextResponse.json({ session })
+    let enhancedSession = { ...session }
+    
+    // If coordinator, get additional details
+    if (session.role === "coordinator" && session.id) {
+      const db = getDbConnection()
+      
+      const coordinator = await db.query.chapterCoordinators.findFirst({
+        where: eq(chapterCoordinators.id, session.id),
+        with: {
+          chapter: true,
+        },
+      })
+      
+      if (coordinator && coordinator.chapter) {
+        enhancedSession = {
+          ...session,
+          name: coordinator.name,
+          email: coordinator.email,
+          chapterName: coordinator.chapter.name,
+        }
+      }
+    }
+    
+    return NextResponse.json({ 
+      session: enhancedSession,
+      user: enhancedSession // For backward compatibility
+    })
   } catch (error) {
     console.error("Error getting session:", error)
     return NextResponse.json({ error: "Failed to get session" }, { status: 500 })

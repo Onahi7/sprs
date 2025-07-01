@@ -1,0 +1,271 @@
+# SPRS API Test Requests
+# Use with REST Client extension (Alt+Click "Send Request")
+
+### Variables
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### ===========================================
+### AUTHENTICATION ENDPOINTS
+### ===========================================
+
+### Admin Login
+POST {{baseUrl}}/api/admin/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "your_password"
+}
+
+### Coordinator Login
+POST {{baseUrl}}/api/coordinator/login
+Content-Type: {{contentType}}
+
+{
+  "code": "COORD_CODE_123"
+}
+
+### Get Current Session
+GET {{baseUrl}}/api/auth/session
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Content-Type: {{contentType}}
+
+### ===========================================
+### ADMIN ENDPOINTS
+### ===========================================
+
+### Get Admin Dashboard Stats
+GET {{baseUrl}}/api/admin/dashboard/stats
+
+### Get All Coordinators
+GET {{baseUrl}}/api/admin/coordinators
+
+### Create New Coordinator
+POST {{baseUrl}}/api/admin/coordinators
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "chapterId": 1,
+  "uniqueCode": "COORD_001"
+}
+
+### Get All Chapters
+GET {{baseUrl}}/api/admin/chapters
+
+### Create New Chapter
+POST {{baseUrl}}/api/admin/chapters
+Content-Type: {{contentType}}
+
+{
+  "name": "Lagos Chapter",
+  "code": "LAG",
+  "address": "Lagos, Nigeria"
+}
+
+### Get All Registrations
+GET {{baseUrl}}/api/admin/registrations
+
+### Get Registration Details
+GET {{baseUrl}}/api/admin/registrations/1
+
+### Get All Schools
+GET {{baseUrl}}/api/admin/schools
+
+### Get All Centers
+GET {{baseUrl}}/api/admin/centers
+
+### Get Duplicate Registrations
+GET {{baseUrl}}/api/admin/duplicates
+
+### Export All Registrations
+GET {{baseUrl}}/api/admin/export-registrations
+
+### ===========================================
+### COORDINATOR ENDPOINTS
+### ===========================================
+
+### Get Coordinator Dashboard Stats
+GET {{baseUrl}}/api/coordinator/dashboard/stats
+
+### Get Coordinator Profile
+GET {{baseUrl}}/api/coordinator/profile
+
+### Get Chapter Information
+GET {{baseUrl}}/api/coordinator/chapter-info
+
+### Get Coordinator Registrations
+GET {{baseUrl}}/api/coordinator/registrations
+
+### Register New Student
+POST {{baseUrl}}/api/coordinator/register
+Content-Type: {{contentType}}
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "phone": "08012345678",
+  "schoolId": 1,
+  "centerId": 1,
+  "subjects": ["Mathematics", "English", "Physics"]
+}
+
+### Validate Registration Data
+POST {{baseUrl}}/api/coordinator/register/validate
+Content-Type: {{contentType}}
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "phone": "08012345678"
+}
+
+### Check for Duplicates
+POST {{baseUrl}}/api/coordinator/check-duplicate
+Content-Type: {{contentType}}
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com"
+}
+
+### Get Coordinator Slots
+GET {{baseUrl}}/api/coordinator/slots
+
+### Get Slot Balance
+GET {{baseUrl}}/api/coordinator/slots/balance
+
+### Get Schools in Chapter
+GET {{baseUrl}}/api/coordinator/schools
+
+### Get Centers in Chapter
+GET {{baseUrl}}/api/coordinator/centers
+
+### Initialize Payment for Slots
+POST {{baseUrl}}/api/coordinator/payment/initialize
+Content-Type: {{contentType}}
+
+{
+  "amount": 50000,
+  "email": "coordinator@example.com",
+  "slots": 10
+}
+
+### Verify Payment
+POST {{baseUrl}}/api/coordinator/payment/verify
+Content-Type: {{contentType}}
+
+{
+  "reference": "paystack_reference_123"
+}
+
+### ===========================================
+### PUBLIC ENDPOINTS
+### ===========================================
+
+### Get All Chapters (Public)
+GET {{baseUrl}}/api/chapters
+
+### Get Chapter Details
+GET {{baseUrl}}/api/chapters/1
+
+### Get All Schools (Public)
+GET {{baseUrl}}/api/schools
+
+### Get All Centers (Public)
+GET {{baseUrl}}/api/centers
+
+### Get Public Statistics
+GET {{baseUrl}}/api/stats
+
+### Lookup Registration by Number
+GET {{baseUrl}}/api/registrations/REG123456
+
+### Get Registration Slip
+GET {{baseUrl}}/api/registrations/REG123456/slip
+
+### ===========================================
+### PAYMENT ENDPOINTS
+### ===========================================
+
+### Initialize Payment (Public)
+POST {{baseUrl}}/api/payment/initialize
+Content-Type: {{contentType}}
+
+{
+  "amount": 5000,
+  "email": "student@example.com",
+  "registrationNumber": "REG123456"
+}
+
+### Verify Payment (Public)
+POST {{baseUrl}}/api/payment/verify
+Content-Type: {{contentType}}
+
+{
+  "reference": "paystack_reference_123"
+}
+
+### ===========================================
+### FILE UPLOAD ENDPOINTS
+### ===========================================
+
+### Upload General File
+POST {{baseUrl}}/api/upload
+Content-Type: multipart/form-data
+
+### Upload Passport Photo
+POST {{baseUrl}}/api/upload/passport
+Content-Type: multipart/form-data
+
+### ===========================================
+### TESTING ENDPOINTS
+### ===========================================
+
+### Test Database Connection
+GET {{baseUrl}}/api/test-db
+
+### Test Email Functionality
+POST {{baseUrl}}/api/test-email
+Content-Type: {{contentType}}
+
+{
+  "to": "test@example.com",
+  "subject": "Test Email",
+  "message": "This is a test email"
+}
+
+### Test Cloudinary Integration
+GET {{baseUrl}}/api/cloudinary-test
+
+### ===========================================
+### SUPERVISOR ENDPOINTS
+### ===========================================
+
+### Supervisor Authentication
+POST {{baseUrl}}/api/supervisor/auth
+Content-Type: {{contentType}}
+
+{
+  "username": "supervisor",
+  "password": "password"
+}
+
+### Get Supervisor Dashboard
+GET {{baseUrl}}/api/supervisor/dashboard
+
+### Get Exam Sessions
+GET {{baseUrl}}/api/supervisor/sessions
+
+### Get Attendance Data
+GET {{baseUrl}}/api/supervisor/attendance
+
+### Get Supervisor Reports
+GET {{baseUrl}}/api/supervisor/reports

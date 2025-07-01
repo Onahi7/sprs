@@ -49,6 +49,8 @@ export interface UserSession {
   role: "admin" | "coordinator"
   chapterId?: number
   chapterName?: string
+  name?: string
+  email?: string
 }
 
 /**
