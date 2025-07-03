@@ -38,6 +38,7 @@ type Student = {
   chapterName: string
   chapterId: number
   centerId: number
+  paymentStatus: "pending" | "completed" | "failed"
 }
 
 type StudentResult = {
@@ -439,6 +440,7 @@ export default function EnterResults() {
                 <TableHeader>                  <TableRow>
                     <TableHead className="w-32">Reg. Number</TableHead>
                     <TableHead className="min-w-48">Student Name</TableHead>
+                    <TableHead className="w-24">Payment</TableHead>
                     {subjects.map(subject => (
                       <TableHead key={subject.id} className="w-32 text-center">
                         {subject.name}
@@ -464,6 +466,18 @@ export default function EnterResults() {
                             {student.centerName}
                           </div>
                         </div>                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={
+                            student.paymentStatus === "completed" ? "default" : 
+                            student.paymentStatus === "pending" ? "secondary" : "destructive"
+                          }
+                          className="text-xs"
+                        >
+                          {student.paymentStatus === "completed" ? "Paid" : 
+                           student.paymentStatus === "pending" ? "Pending" : "Failed"}
+                        </Badge>
+                      </TableCell>
                       {subjects.map(subject => {
                         const result = student.results[subject.id]
                         return (

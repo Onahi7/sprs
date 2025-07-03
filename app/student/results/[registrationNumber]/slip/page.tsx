@@ -22,7 +22,7 @@ export default function ResultSlipPage() {
   const fetchResults = async () => {
     try {
       // Fetch registration details
-      const registrationResponse = await fetch(`/api/registrations?registrationNumber=${registrationNumber}`)
+      const registrationResponse = await fetch(`/api/registrations/${registrationNumber}`)
       if (!registrationResponse.ok) throw new Error("Registration not found")
       
       const registration = await registrationResponse.json()
@@ -123,8 +123,47 @@ export default function ResultSlipPage() {
     return "F"
   }
 
-  const handlePrint = () => {
-    window.print()
+  const handlePrint = async () => {
+    try {
+      // Call the PDF generation API and open it for printing
+      const response = await fetch(`/api/student/results/${registrationNumber}/slip`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+      
+      // Get the PDF blob
+      const blob = await response.blob()
+      
+      // Create object URL and open in new window for printing
+      const url = window.URL.createObjectURL(blob)
+      const printWindow = window.open(url, '_blank')
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print()
+          // Clean up the object URL after a delay
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url)
+            printWindow.close()
+          }, 1000)
+        }
+      } else {
+        // Fallback: trigger download if popup blocked
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `result-slip-${registrationNumber}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      }
+      
+    } catch (error) {
+      console.error('Error generating PDF for print:', error)
+      // Fallback to browser print
+      window.print()
+    }
   }  
   const handleDownload = async () => {
     try {
@@ -203,189 +242,198 @@ export default function ResultSlipPage() {
             </Button>
           </div>
         </div>
-      </div>      {/* Result Slip - Printable - Exact Format */}
+      </div>      {/* Result Slip - Professional Format Matching PDF */}
       <div className="min-h-screen bg-white print:min-h-0">
-        <div className="max-w-4xl mx-auto p-8 print:p-6 result-slip-container">
+        <div className="max-w-4xl mx-auto p-8 print:p-6">
           
-          {/* Header Section */}
-          <div className="border-2 border-gray-800 p-4 mb-4 result-slip-header">
-            <div className="flex items-center justify-between mb-4">
-              {/* Left: Logo */}
-              <div className="flex items-center">
-                <div className="w-20 h-20 mr-4">
-                  <Image
-                    src="/napps-logo.svg"
-                    alt="NAPPS Logo"
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      // Fallback to placeholder
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/placeholder-logo.svg";
-                    }}
-                  />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 leading-tight">
-                    NAPPS NASARAWA STATE CHAPTER
-                  </h1>
-                  <p className="text-sm text-gray-700 mt-1">
-                    Besides SALAMATU Hall Lafia, Jos Road
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    Napps Nasarawa State Unified Certificate Examination
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">(NNSUCE-2024)</p>
+          {/* Professional Card Container with Shadow */}
+          <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-8 mx-auto max-w-3xl">
+            
+            {/* Watermark Background */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div 
+                  className="text-gray-100 text-6xl font-bold transform -rotate-45 select-none opacity-30"
+                  style={{ fontSize: '4rem' }}
+                >
+                  NAPPS Nasarawa State
                 </div>
               </div>
               
-              {/* Right: Result Slip Title and Date */}
-              <div className="text-right">
-                <h2 className="text-2xl font-bold text-red-600 mb-2">RESULT SLIP</h2>
-                <p className="text-sm text-red-600">Exam Date: 08/06/24</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Candidate Details Section */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Candidate Details</h3>
-            
-            <div className="flex">
-              {/* Left: Student Information */}
-              <div className="flex-1 space-y-3">
-                <div className="flex">
-                  <span className="font-semibold w-40 text-gray-700">Student Name:</span>
-                  <span className="font-bold text-gray-900">
-                    {results.student.firstName?.toUpperCase()} {results.student.lastName?.toUpperCase()}
-                  </span>
-                </div>
-                
-                <div className="flex">
-                  <span className="font-semibold w-40 text-gray-700">Registration Number:</span>
-                  <span className="font-bold text-gray-900 font-mono">
-                    {results.student.registrationNumber}
-                  </span>
-                </div>
-                
-                <div className="flex">
-                  <span className="font-semibold w-40 text-gray-700">Center Name:</span>
-                  <span className="font-bold text-gray-900">
-                    {results.student.centerName}
-                  </span>
-                </div>
-                
-                <div className="flex">
-                  <span className="font-semibold w-40 text-gray-700">School Name:</span>
-                  <span className="font-bold text-gray-900">
-                    {results.student.schoolName}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Right: Student Photo */}
-              <div className="ml-8">
-                <div className="w-32 h-40 border-2 border-gray-400 bg-gray-100 flex items-center justify-center">
-                  {results.student.passportUrl ? (
-                    <Image 
-                      src={results.student.passportUrl} 
-                      alt="Student Photo"
-                      width={128}
-                      height={160}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200"></div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Subjects Table */}
-          <div className="mb-6">
-            <table className="w-full border-collapse subjects-table">
-              <thead>
-                <tr>
-                  <th className="bg-green-600 text-white border border-gray-400 p-2 text-left green-header">
-                    SUBJECT
-                  </th>
-                  <th className="bg-green-600 text-white border border-gray-400 p-2 text-center green-header">
-                    SCORE
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.subjects.map((subject: any, index: number) => {
-                  const result = results.results[subject.id]
-                  const isEven = index % 2 === 0
-                  
-                  return (
-                    <tr key={subject.id} className={isEven ? "bg-gray-100 gray-row" : "bg-yellow-100 yellow-row"}>
-                      <td className="border border-gray-400 p-3 font-semibold">
-                        {subject.name}
-                      </td>
-                      <td className="border border-gray-400 p-3 text-center font-bold text-lg">
-                        {result.score}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Total and Position Section */}
-          <div className="flex justify-between items-center mb-8">
-            <div className="bg-gray-300 px-6 py-2 rounded total-box">
-              <span className="font-bold text-lg">TOTAL</span>
-              <span className="ml-4 font-bold text-xl">{results.totalScore}</span>
-            </div>
-            
-            <div className="bg-gray-300 px-6 py-2 rounded position-box">
-              <span className="font-bold text-lg">Center Position</span>
-              <span className="ml-4 font-bold text-xl">{centerPosition > 0 ? `${centerPosition}${getOrdinalSuffix(centerPosition)}` : 'N/A'}</span>
-            </div>
-          </div>
-
-          {/* Signature Section */}
-          <div className="flex justify-between items-center mb-8">
-            <div className="text-center">
-              <div className="mb-12">
-                <div className="border-b-2 border-black w-40 mx-auto mb-2"></div>
-                <p className="text-sm font-semibold">Opah Omaku Ogan</p>
-                <p className="text-xs">State Chairman</p>
-              </div>
-            </div>
-            
-            <div className="flex-1 text-center">
-              {/* Barcode area */}
-              <div className="mb-4">
-                <div className="inline-block">
-                  {/* Simple barcode representation */}
-                  <div className="flex space-x-1">
-                    {Array.from({length: 20}, (_, i) => (
-                      <div 
-                        key={i} 
-                        className="bg-black" 
-                        style={{
-                          width: Math.random() > 0.5 ? '2px' : '4px',
-                          height: '40px'
+              {/* Header Section */}
+              <div className="relative z-10 mb-8">
+                <div className="flex items-start justify-between mb-6">
+                  {/* Left: Logo */}
+                  <div className="flex items-center">
+                    <div className="w-20 h-20 mr-6 rounded-full border-4 border-green-600 p-1 bg-white">
+                      <Image
+                        src="https://res.cloudinary.com/dbbzy6j4s/image/upload/v1749089475/sprs_passports/sprs_passports/passport_Hji2hREF.png"
+                        alt="NAPPS Logo"
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-contain rounded-full"
+                        onError={(e) => {
+                          // Fallback to placeholder
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder-logo.svg";
                         }}
-                      ></div>
-                    ))}
+                      />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold text-black leading-tight">
+                        NAPPS NASARAWA STATE CHAPTER
+                      </h1>
+                      <p className="text-sm text-gray-700 mt-1">
+                        Besides SALAMATU Hall Lafia, Jos Road
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Napps Nasarawa State Unified Certificate Examination
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">(NNSUCE-2024)</p>
+                    </div>
                   </div>
-                  <p className="text-xs mt-2 font-mono">{results.student.registrationNumber}</p>
+                  
+                  {/* Right: Exam Date */}
+                  <div className="text-right">
+                    <p className="text-sm text-red-600 font-medium">Exam Date: 06/06/24</p>
+                  </div>
+                </div>
+                
+                {/* Result Slip Header Bar */}
+                <div className="bg-green-700 text-white text-center py-3 rounded-md mb-6">
+                  <h2 className="text-lg font-bold">RESULT SLIP</h2>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Footer */}
-          <div className="text-center text-xs text-gray-600 border-t pt-4">
-            <p>This is an official document of NAPPS Nasarawa State Chapter</p>
-            <p>For verification or inquiries, contact the examination body</p>
+              {/* Candidate Details Section */}
+              <div className="mb-8">
+                <h3 className="text-lg font-bold text-black mb-4">Candidate Details</h3>
+                
+                <div className="flex">
+                  {/* Left: Student Information */}
+                  <div className="flex-1 space-y-4">
+                    <div className="flex">
+                      <span className="font-bold w-48 text-black">Student Name:</span>
+                      <span className="font-bold text-gray-800">
+                        {results.student.firstName?.toUpperCase()} {results.student.lastName?.toUpperCase()}
+                      </span>
+                    </div>
+                    
+                    <div className="flex">
+                      <span className="font-bold w-48 text-black">Registration Number:</span>
+                      <span className="font-normal text-gray-700">
+                        {results.student.registrationNumber}
+                      </span>
+                    </div>
+                    
+                    <div className="flex">
+                      <span className="font-bold w-48 text-black">Center Name:</span>
+                      <span className="font-normal text-gray-700">
+                        {results.student.centerName}
+                      </span>
+                    </div>
+                    
+                    <div className="flex">
+                      <span className="font-bold w-48 text-black">School Name:</span>
+                      <span className="font-normal text-gray-700">
+                        {results.student.schoolName}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Right: Student Photo */}
+                  <div className="ml-8">
+                    <div className="w-32 h-40 border-2 border-gray-300 bg-green-100 rounded-lg overflow-hidden shadow-md">
+                      {results.student.passportUrl ? (
+                        <Image 
+                          src={results.student.passportUrl} 
+                          alt="Student Photo"
+                          width={128}
+                          height={160}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-green-100 flex items-center justify-center">
+                          <span className="text-gray-500 text-sm">No Photo</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Results Table */}
+              <div className="mb-8">
+                <table className="w-full border-collapse shadow-lg rounded-lg overflow-hidden">
+                  <thead>
+                    <tr>
+                      <th className="bg-green-700 text-white border border-gray-300 p-4 text-left text-lg font-bold">
+                        SUBJECT
+                      </th>
+                      <th className="bg-green-700 text-white border border-gray-300 p-4 text-center text-lg font-bold">
+                        SCORE
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.subjects.map((subject: any, index: number) => {
+                      const result = results.results[subject.id]
+                      
+                      return (
+                        <tr key={subject.id} className={index === 1 ? "bg-yellow-100" : index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                          <td className="border border-gray-300 p-4 font-medium text-black text-lg">
+                            {subject.name}
+                          </td>
+                          <td className="border border-gray-300 p-4 text-center font-bold text-xl text-black">
+                            {result.score}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Professional Summary Boxes */}
+              <div className="flex justify-between items-center mb-8">
+                <div className="bg-gray-200 rounded-lg shadow-md overflow-hidden">
+                  <div className="bg-gray-400 px-6 py-2">
+                    <span className="font-bold text-black text-sm">TOTAL</span>
+                  </div>
+                  <div className="px-6 py-3 bg-white">
+                    <span className="font-bold text-2xl text-black">{results.totalScore}</span>
+                  </div>
+                </div>
+                
+                {centerPosition > 0 && (
+                  <div className="bg-gray-200 rounded-lg shadow-md overflow-hidden">
+                    <div className="bg-gray-400 px-6 py-2">
+                      <span className="font-bold text-black text-sm">Center Position</span>
+                    </div>
+                    <div className="px-6 py-3 bg-white">
+                      <span className="font-bold text-2xl text-black">
+                        {centerPosition}{getOrdinalSuffix(centerPosition)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Professional Signature Section */}
+              <div className="flex justify-between items-end mb-8">
+                <div className="text-left">
+                  <p className="italic text-black text-lg mb-1">Ogah Omaha Ogah</p>
+                  <p className="font-bold text-black text-sm mb-3">State Chairman</p>
+                  <div className="border-b-2 border-black w-40"></div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="text-center text-sm text-gray-600 border-t pt-4">
+                <p className="font-medium">This is an official document of NAPPS Nasarawa State Chapter</p>
+                <p>For verification or inquiries, contact the examination body</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

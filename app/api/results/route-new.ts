@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // For public access, verify registration exists and payment is completed
+      // For public access, verify registration exists
       const registration = await db
         .select()
         .from(registrations)
@@ -43,13 +43,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Registration not found" }, { status: 404 })
       }
 
-      // Only show results for completed payments
-      if (registration[0].paymentStatus !== 'completed') {
-        return NextResponse.json(
-          { error: "Results are only available for students who have completed payment" }, 
-          { status: 403 }
-        )
-      }
+      // Note: Removed payment status check - results now available regardless of payment status
+      // Uncomment the lines below if you want to restrict public result viewing to paid students only:
+      // if (registration[0].paymentStatus !== 'completed') {
+      //   return NextResponse.json(
+      //     { error: "Results are only available for students who have completed payment" }, 
+      //     { status: 403 }
+      //   )
+      // }
 
       // Fetch and return results for this registration
       const results = await db

@@ -11,6 +11,7 @@ import { RegistrationsTable } from "./registrations-table"
 import { SplitTransactions } from "./split-transactions"
 import { SlotBalanceDisplay } from "./slot-balance-display"
 import { CoordinatorDuplicateAlert } from "./duplicate-alert"
+import { RegistrationCountdown } from "./registration-countdown"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -144,7 +145,11 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
   const formattedDate = today.toLocaleDateString('en-US', dateOptions)
   
   return (
-    <div className="space-y-6">      <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:justify-between md:items-center">
+    <div className="space-y-6">
+      {/* Registration Deadline Alert */}
+      <RegistrationCountdown />
+      
+      <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:justify-between md:items-center">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">{stats?.chapterName || "Chapter"} Dashboard</h1>

@@ -5,7 +5,12 @@ import { eq } from "drizzle-orm"
 
 export async function GET(request: Request, { params }: { params: { registrationNumber: string } }) {
   try {
-    const { registrationNumber } = params
+    const { registrationNumber } = await params
+
+    // Check if database connection is available
+    if (!db) {
+      return NextResponse.json({ error: "Database connection not available" }, { status: 500 })
+    }
 
     // Get registration details
     const registration = await db.query.registrations.findFirst({

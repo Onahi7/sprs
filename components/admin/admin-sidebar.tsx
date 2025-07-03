@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { BarChart3, Home, Settings, Users, BookOpen, Map, Building2, FileText, Mail, Zap, AlertTriangle, UserCog, Star } from "lucide-react"
+import { BarChart3, Home, Settings, Users, BookOpen, Map, Building2, FileText, Mail, Zap, AlertTriangle, UserCog, Star, ClipboardList } from "lucide-react"
 import { LogoutButton } from "@/components/auth/logout-button"
 
 const navItems = [
@@ -24,6 +24,14 @@ const navItems = [
 		href: "/admin/registrations/management",
 		icon: UserCog,
 		description: "Advanced registration tools",
+		isNew: true,
+		featured: true
+	},
+	{
+		title: "Results Management",
+		href: "/admin/results",
+		icon: ClipboardList,
+		description: "View and download results",
 		isNew: true,
 		featured: true
 	},

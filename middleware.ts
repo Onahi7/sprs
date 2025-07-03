@@ -31,7 +31,12 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith("/api/admin/login") ||
     req.nextUrl.pathname.startsWith("/api/coordinator/login") ||
     req.nextUrl.pathname.startsWith("/api/supervisor") ||
+    req.nextUrl.pathname.startsWith("/api/results") ||
+    req.nextUrl.pathname.startsWith("/api/students") ||
+    req.nextUrl.pathname.startsWith("/api/admin/subjects") ||
     req.nextUrl.pathname.startsWith("/supervisor/login") ||
+    req.nextUrl.pathname.startsWith("/result-entry") ||
+    req.nextUrl.pathname.startsWith("/result-entry/login") ||
     // Static assets
     req.nextUrl.pathname.endsWith(".svg") ||
     req.nextUrl.pathname.endsWith(".png") ||
@@ -72,9 +77,15 @@ export async function middleware(req: NextRequest) {
   const role = decodedToken?.role
   const isAuthPage = req.nextUrl.pathname.startsWith("/auth/login")
   const isSupervisorRoute = req.nextUrl.pathname.startsWith("/supervisor")
+  const isResultEntryRoute = req.nextUrl.pathname.startsWith("/result-entry")
   
   // Handle supervisor routes separately (they have their own authentication)
   if (isSupervisorRoute) {
+    return NextResponse.next()
+  }
+  
+  // Handle result entry routes separately (they have their own authentication)
+  if (isResultEntryRoute) {
     return NextResponse.next()
   }
   

@@ -491,21 +491,24 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
     doc.setFillColor(...white);
     doc.rect(0, 0, 210, 297, 'F');
 
-    // Professional card-style container with shadow effect
+    // Professional card-style container with right margin shadow
     const cardX = 20;
     const cardY = 15;
     const cardWidth = 170;
     const cardHeight = 260;
     
-    // Drop shadow effect (multiple rectangles with increasing transparency)
-    for (let i = 0; i < 3; i++) {
-      doc.setFillColor(220 - i * 20, 220 - i * 20, 220 - i * 20);
-      doc.roundedRect(cardX + i + 1, cardY + i + 1, cardWidth, cardHeight, 4, 4, 'F');
-    }
+    // Right margin shadow effect
+    doc.setFillColor(200, 200, 200);
+    doc.rect(cardX + cardWidth + 2, cardY + 2, 3, cardHeight, 'F');
+    doc.setFillColor(220, 220, 220);
+    doc.rect(cardX + cardWidth + 1, cardY + 1, 2, cardHeight, 'F');
     
     // Main card background
     doc.setFillColor(...white);
-    doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 4, 4, 'F');
+    doc.rect(cardX, cardY, cardWidth, cardHeight, 'F');
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(1);
+    doc.rect(cardX, cardY, cardWidth, cardHeight, 'S');
       // Watermark - professional and subtle
     doc.setTextColor(240, 240, 240); // Very light gray
     doc.setFontSize(45);
@@ -715,14 +718,19 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
 
     yPos += 20;
 
-    // Professional Summary Boxes (matching screenshot exactly)
+    // Professional Summary Boxes (improved alignment)
     const boxY = yPos;
     const boxHeight = 15;
-    const spacing = 20;
+    const boxSpacing = 15; // Reduced spacing for better alignment
+    
+    // Calculate positions for centered layout
+    const totalBoxWidth = 55;
+    const positionBoxWidth = 65;
+    const totalAvailableWidth = totalBoxWidth + positionBoxWidth + boxSpacing;
+    const startX = tableX + (tableWidth - totalAvailableWidth) / 2; // Center the boxes
     
     // Total Box
-    const totalBoxX = tableX + 20;
-    const totalBoxWidth = 60;
+    const totalBoxX = startX;
     
     // Box header
     doc.setFillColor(...boxHeaderGray);
@@ -747,8 +755,7 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
 
     // Center Position Box (if available)
     if (resultData.centerPosition && resultData.centerPosition > 0) {
-      const positionBoxX = totalBoxX + totalBoxWidth + spacing;
-      const positionBoxWidth = 70;
+      const positionBoxX = totalBoxX + totalBoxWidth + boxSpacing;
       
       // Box header
       doc.setFillColor(...boxHeaderGray);
@@ -756,7 +763,7 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
       doc.setTextColor(...primaryText);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-      doc.text('Center Position', positionBoxX + positionBoxWidth/2, boxY + 4, { align: 'center' });
+      doc.text('CENTER POSITION', positionBoxX + positionBoxWidth/2, boxY + 4, { align: 'center' });
       
       // Box value
       doc.setFillColor(...white);
@@ -773,10 +780,10 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
       doc.rect(positionBoxX, boxY, positionBoxWidth, boxHeight);
     }
 
-    yPos += 35;
+    yPos += 40; // Increased spacing to push signature lower
 
-    // Signature Section (professional styling)
-    const signatureX = tableX + 10;
+    // Signature Section (professional styling with better positioning)
+    const signatureX = tableX + 15;
     
     // Signature name
     doc.setTextColor(...primaryText);
@@ -794,22 +801,16 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
     doc.setLineWidth(1);
     doc.line(signatureX, yPos + 3, signatureX + 40, yPos + 3);
 
-    // Professional QR Code (positioned like barcode in screenshot)
-    const qrX = tableX + 80;
-    const qrY = yPos - 15;
+    // Professional QR Code (positioned for better balance)
+    const qrX = tableX + tableWidth - 35; // Right-aligned with proper margin
+    const qrY = yPos - 18;
     const qrSize = 25;
     
     try {
-      // Generate QR code with professional styling
-      const qrData = JSON.stringify({
-        regNumber: resultData.student.registrationNumber,
-        student: resultData.student.firstName + ' ' + resultData.student.lastName,
-        totalScore: resultData.totalScore,
-        grade: resultData.overallGrade,
-        verifyUrl: `https://portal.nappsnasarawa.com/verify/${resultData.student.registrationNumber}`
-      });
+      // Generate QR code with verification link that prepopulates registration number
+      const verificationUrl = `https://exams.nappsnasarawa.com/verify/${resultData.student.registrationNumber}`;
       
-      const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+      const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
         width: 200,
         margin: 1,
         color: {
@@ -853,6 +854,34 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
       doc.setLineWidth(0.5);
       doc.rect(qrX - 1, qrY - 1, qrSize + 2, qrSize + 2);
     }
+
+    // Move to footer area
+    yPos += 25;
+
+    // Authentication Box at Footer
+    const authBoxY = yPos;
+    const authBoxHeight = 12;
+    const authBoxWidth = tableWidth;
+    const authBoxX = tableX;
+    
+    // Authentication box background
+    doc.setFillColor(245, 245, 245); // Light gray background
+    doc.roundedRect(authBoxX, authBoxY, authBoxWidth, authBoxHeight, 2, 2, 'F');
+    
+    // Authentication box border
+    doc.setDrawColor(...nappsGreen);
+    doc.setLineWidth(1);
+    doc.roundedRect(authBoxX, authBoxY, authBoxWidth, authBoxHeight, 2, 2, 'S');
+    
+    // Authentication text
+    doc.setTextColor(...nappsGreen);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('AUTHENTIC NAPPS NASARAWA', authBoxX + authBoxWidth/2, authBoxY + 5, { align: 'center' });
+    
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('This document is digitally verified and authenticated', authBoxX + authBoxWidth/2, authBoxY + 8.5, { align: 'center' });
 
     // Convert to buffer
     const pdfOutput = doc.output('arraybuffer');

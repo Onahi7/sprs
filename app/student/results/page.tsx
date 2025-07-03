@@ -30,7 +30,7 @@ export default function StudentResultsPage() {
 
     try {
       // First, verify the registration exists
-      const registrationResponse = await fetch(`/api/registrations?registrationNumber=${registrationNumber}`)
+      const registrationResponse = await fetch(`/api/registrations/${registrationNumber}`)
       
       if (!registrationResponse.ok) {
         if (registrationResponse.status === 404) {
@@ -43,11 +43,12 @@ export default function StudentResultsPage() {
 
       const registration = await registrationResponse.json()
 
-      // Check if payment is completed
-      if (registration.paymentStatus !== 'completed') {
-        setError("Results are only available for students who have completed payment.")
-        return
-      }
+      // Note: Payment status check removed - results now available regardless of payment status
+      // Uncomment the lines below if you want to restrict result viewing to paid students only:
+      // if (registration.paymentStatus !== 'completed') {
+      //   setError("Results are only available for students who have completed payment.")
+      //   return
+      // }
 
       // Fetch results for this registration
       const resultsResponse = await fetch(`/api/results?registrationNumber=${registrationNumber}`)

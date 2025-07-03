@@ -60,12 +60,9 @@ export async function GET(request: NextRequest) {
       .where(whereConditions)
       .orderBy(registrations.lastName, registrations.firstName)
 
-    // Only include completed payment registrations
-    const validStudents = students.filter(student => 
-      student.paymentStatus === "completed"
-    )
-
-    return NextResponse.json(validStudents)
+    // Return all students (removed payment status filter)
+    // Note: This allows result entry for all students regardless of payment status
+    return NextResponse.json(students)
   } catch (error) {
     console.error("Error fetching students:", error)
     return NextResponse.json(

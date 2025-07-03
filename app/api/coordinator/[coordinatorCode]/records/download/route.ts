@@ -16,7 +16,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const centerId = searchParams.get("centerId")
     const format = searchParams.get("format") || "csv"
-    const coordinatorCode = params.coordinatorCode
+    const { coordinatorCode } = await params
 
     // First, verify the coordinator and get their chapter
     const coordinator = await db
