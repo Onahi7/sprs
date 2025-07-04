@@ -11,8 +11,9 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { useToast } from "@/components/ui/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Download, Search, RefreshCw, AlertCircle } from "lucide-react"
+import { Download, Search, RefreshCw, AlertCircle, Settings } from "lucide-react"
 import { format } from "date-fns"
+import { AdvancedExport } from "./advanced-export"
 
 // Define types
 type Registration = {
@@ -76,6 +77,7 @@ export function RegistrationsManagement() {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [duplicatesFilter, setDuplicatesFilter] = useState<boolean>(filterParam === 'duplicates')
+  const [showAdvancedExport, setShowAdvancedExport] = useState(false)
   
   // Fetch centers and schools for the coordinator
   useEffect(() => {
@@ -356,6 +358,11 @@ export function RegistrationsManagement() {
 
   return (
     <div className="space-y-4">
+      {/* Advanced Export Panel */}
+      {showAdvancedExport && (
+        <AdvancedExport />
+      )}
+      
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -402,7 +409,16 @@ export function RegistrationsManagement() {
                 className="flex items-center gap-1"
               >
                 <Download className="w-4 h-4" />
-                Export CSV
+                Quick CSV
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowAdvancedExport(!showAdvancedExport)}
+                className="flex items-center gap-1"
+              >
+                <Settings className="w-4 h-4" />
+                Advanced Export
               </Button>
               <Button 
                 variant="outline" 

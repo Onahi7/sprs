@@ -72,22 +72,47 @@ function generateBarcodeBase64(data: string): string | null {
     return null;
   }
 }
+// Global image cache for performance optimization
+const globalImageCache = new Map<string, string>()
+
 async function imageUrlToBase64(url: string): Promise<string> {
+  // Check cache first
+  if (globalImageCache.has(url)) {
+    return globalImageCache.get(url)!
+  }
+
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      // Add timeout and optimize headers
+      signal: AbortSignal.timeout(10000), // 10 second timeout
+      headers: {
+        'User-Agent': 'NAPPS-SPRS/1.0'
+      }
+    });
+    
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
+    
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64 = buffer.toString('base64');
     
     // Determine the MIME type from the URL or response headers
     const contentType = response.headers.get('content-type') || 'image/jpeg';
-    return `data:${contentType};base64,${base64}`;
+    const dataUrl = `data:${contentType};base64,${base64}`;
+    
+    // Cache the result (limit cache size to prevent memory issues)
+    if (globalImageCache.size < 500) { // Max 500 cached images
+      globalImageCache.set(url, dataUrl)
+    }
+    
+    return dataUrl;
   } catch (error) {
     console.error('Error converting image to base64:', error);
-    throw error;
+    
+    // Return a lightweight placeholder instead of throwing
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCAzMCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNSAyMEMxNy4yMDkxIDIwIDE5IDIxLjc5MDkgMTkgMjRDMTkgMjYuMjA5MSAxNy4yMDkxIDI4IDE1IDI4QzEyLjc5MDkgMjggMTEgMjYuMjA5MSAxMSAyNEMxMSAyMS43OTA5IDEyLjc5MDkgMjAgMTUgMjBaIiBmaWxsPSIjQ0NDIi8+Cjwvc3ZnPgo='
   }
 }
 
@@ -132,32 +157,16 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     const logoSize = 25;
     
     try {
-      // Load the actual NAPPS logo from Cloudinary
+      // Load the actual NAPPS logo from Cloudinary with timeout
       const logoUrl = 'https://res.cloudinary.com/dbbzy6j4s/image/upload/v1749089475/sprs_passports/sprs_passports/passport_Hji2hREF.png';
       const logoBase64 = await imageUrlToBase64(logoUrl);
       doc.addImage(logoBase64, 'PNG', logoX, logoY, logoSize, logoSize);
     } catch (error) {
       console.warn('Could not load logo, using fallback:', error);
-      // Fallback logo design
-      doc.setFillColor(34, 139, 34); // Forest green
-      doc.circle(logoX + logoSize/2, logoY + logoSize/2, 10, 'F');
-      
-      // Inner gold circle
-      doc.setFillColor(255, 215, 0); // Gold
-      doc.circle(logoX + logoSize/2, logoY + logoSize/2, 7, 'F');
-      
-      // Logo text "N"
-      doc.setTextColor(34, 139, 34);
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('N', logoX + logoSize/2, logoY + logoSize/2, { align: 'center' });
-      
-      // Banner below logo
-      doc.setFillColor(255, 215, 0);
-      doc.roundedRect(logoX + logoSize/2 - 8, logoY + logoSize/2 + 8, 16, 5, 2, 2, 'F');
-      doc.setTextColor(34, 139, 34);
-      doc.setFontSize(6);
-      doc.text('NAPPS', logoX + logoSize/2, logoY + logoSize/2 + 11, { align: 'center' });    }
+      // Lightweight SVG fallback logo
+      const fallbackLogo = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iMjUiIHZpZXdCb3g9IjAgMCAyNSAyNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjEyLjUiIGZpbGw9IiMyMjhCMjIiLz4KPGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjgiIGZpbGw9IiNGRkQ3MDAiLz4KPHR4dCB4PSIxMi41IiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzIyOEIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TjwvdGV4dD4KPC9zdmc+'
+      doc.addImage(fallbackLogo, 'SVG', logoX, logoY, logoSize, logoSize);
+    }
     
     // Organization header - positioned to work with logo
     doc.setTextColor(...nappsGreen);
@@ -210,28 +219,20 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
         doc.rect(photoX, photoY, photoWidth, photoHeight);
       } catch (error) {
         console.warn('Could not load passport image, using placeholder:', error);
-        // Professional placeholder
-        doc.setFillColor(...white);
-        doc.rect(photoX, photoY, photoWidth, photoHeight, 'F');
+        // Use lightweight SVG placeholder instead of complex drawing
+        const placeholderSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCAzMCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjVGNUY1IiBzdHJva2U9IiNEREQiLz4KPHN2ZyB4PSI4IiB5PSIxMCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IiNBQUEiPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0FBQSIvPgo8L3N2Zz4KPHR4dCB4PSIxNSIgeT0iMzIiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2IiBmaWxsPSIjQUFBIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5QSE9UTzwvdGV4dD4KPC9zdmc+'
+        doc.addImage(placeholderSvg, 'SVG', photoX, photoY, photoWidth, photoHeight);
         doc.setDrawColor(...borderColor);
         doc.setLineWidth(0.8);
         doc.rect(photoX, photoY, photoWidth, photoHeight);
-        doc.setTextColor(...secondaryText);
-        doc.setFontSize(8);
-        doc.text('STUDENT', photoX + photoWidth/2, photoY + photoHeight/2 - 2, { align: 'center' });
-        doc.text('PHOTO', photoX + photoWidth/2, photoY + photoHeight/2 + 3, { align: 'center' });
       }
     } else {
-      // Professional placeholder
-      doc.setFillColor(...white);
-      doc.rect(photoX, photoY, photoWidth, photoHeight, 'F');
+      // Use lightweight SVG placeholder
+      const placeholderSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCAzMCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjVGNUY1IiBzdHJva2U9IiNEREQiLz4KPHN2ZyB4PSI4IiB5PSIxMCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IiNBQUEiPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0FBQSIvPgo8L3N2Zz4KPHR4dCB4PSIxNSIgeT0iMzIiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2IiBmaWxsPSIjQUFBIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5QSE9UTzwvdGV4dD4KPC9zdmc+'
+      doc.addImage(placeholderSvg, 'SVG', photoX, photoY, photoWidth, photoHeight);
       doc.setDrawColor(...borderColor);
       doc.setLineWidth(0.8);
       doc.rect(photoX, photoY, photoWidth, photoHeight);
-      doc.setTextColor(...secondaryText);
-      doc.setFontSize(8);
-      doc.text('STUDENT', photoX + photoWidth/2, photoY + photoHeight/2 - 2, { align: 'center' });
-      doc.text('PHOTO', photoX + photoWidth/2, photoY + photoHeight/2 + 3, { align: 'center' });
     }    // Student information section - left side, more compact
     const infoX = 25;
     let infoY = containerY + 15; // Reduced from 20
