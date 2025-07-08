@@ -91,7 +91,7 @@ export function AdvancedExport() {
       ...(exportOptions.paymentFilter && { paymentStatus: exportOptions.paymentFilter }),
     })
 
-    const response = await fetch(`/api/coordinator/register?${queryParams}`)
+    const response = await fetch(`/api/coordinator/registrations?${queryParams}`)
     
     if (!response.ok) {
       throw new Error("Failed to export CSV")

@@ -126,15 +126,15 @@ export function RegistrationsManagement() {
       // Use the duplicates endpoint if we're filtering for duplicates
       const endpoint = duplicatesFilter 
         ? `/api/coordinator/duplicates` 
-        : `/api/coordinator/register`
+        : `/api/coordinator/registrations`
       
       const res = await fetch(`${endpoint}?${queryParams.toString()}`)
       const data = await res.json()
       
       if (res.ok && data.registrations) {
         setRegistrations(data.registrations)
-        setTotal(data.total || 0)
-        setTotalPages(Math.ceil((data.total || 0) / pageSize))
+        setTotal(data.pagination?.total || data.total || 0)
+        setTotalPages(Math.ceil((data.pagination?.total || data.total || 0) / pageSize))
       } else {
         throw new Error(data.error || 'Failed to fetch registrations')
       }
@@ -172,7 +172,7 @@ export function RegistrationsManagement() {
         ...(duplicatesFilter && { filter: 'duplicates' })
       })
       
-      const res = await fetch(`/api/coordinator/register?${queryParams.toString()}`)
+      const res = await fetch(`/api/coordinator/registrations?${queryParams.toString()}`)
       
       if (!res.ok) {
         throw new Error('Export failed')

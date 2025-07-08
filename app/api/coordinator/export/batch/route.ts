@@ -51,10 +51,18 @@ export async function POST(request: Request) {
     }
 
     const coordinatorId = session.id!
+    
+    // Use chapterId from session to get all registrations for this chapter
+    const chapterId = session.chapterId
+    
+    if (!chapterId) {
+      return NextResponse.json({ error: "No chapter assigned to coordinator" }, { status: 400 })
+    }
+    
     const db = getDbConnection()
 
-    // Build query conditions
-    const conditions = [eq(registrations.coordinatorRegisteredBy, coordinatorId)]
+    // Build query conditions - use chapterId to include all registrations for this chapter
+    const conditions = [eq(registrations.chapterId, chapterId)]
     
     if (filters.schoolId && filters.schoolId !== "all") {
       if (filters.schoolId.startsWith("manual_")) {

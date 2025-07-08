@@ -17,28 +17,52 @@ export function useRegistrationCountdown() {
     total: 0
   })
   const [isExpired, setIsExpired] = useState(false)
+  const [isInGracePeriod, setIsInGracePeriod] = useState(false)
 
   useEffect(() => {
-    // Registration closes on July 8th, 2025 at 12:00 AM (midnight)
-    const deadline = new Date('2025-07-08T00:00:00')
+    // Original deadline: July 8th, 2025 at 12:00 AM (midnight)
+    const originalDeadline = new Date('2025-07-08T00:00:00')
+    // Grace period: 48 hours after original deadline
+    const gracePeriodDeadline = new Date('2025-07-10T00:00:00') // July 10th, 2025
 
     const calculateTimeLeft = () => {
       const now = new Date()
-      const difference = deadline.getTime() - now.getTime()
+      const originalDifference = originalDeadline.getTime() - now.getTime()
+      const graceDifference = gracePeriodDeadline.getTime() - now.getTime()
 
-      if (difference <= 0) {
+      // Check if we're past the grace period
+      if (graceDifference <= 0) {
         setIsExpired(true)
+        setIsInGracePeriod(false)
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 })
         return
       }
 
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+      // Check if we're in the grace period (past original deadline but before grace deadline)
+      if (originalDifference <= 0 && graceDifference > 0) {
+        setIsInGracePeriod(true)
+        setIsExpired(false)
+        
+        // Show time remaining in grace period
+        const days = Math.floor(graceDifference / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((graceDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((graceDifference % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((graceDifference % (1000 * 60)) / 1000)
 
-      setTimeLeft({ days, hours, minutes, seconds, total: difference })
+        setTimeLeft({ days, hours, minutes, seconds, total: graceDifference })
+        return
+      }
+
+      // We're before the original deadline
+      setIsInGracePeriod(false)
       setIsExpired(false)
+      
+      const days = Math.floor(originalDifference / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((originalDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((originalDifference % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((originalDifference % (1000 * 60)) / 1000)
+
+      setTimeLeft({ days, hours, minutes, seconds, total: originalDifference })
     }
 
     calculateTimeLeft()
@@ -47,5 +71,11 @@ export function useRegistrationCountdown() {
     return () => clearInterval(timer)
   }, [])
 
-  return { timeLeft, isExpired, deadline: new Date('2025-07-08T00:00:00') }
+  return { 
+    timeLeft, 
+    isExpired, 
+    isInGracePeriod,
+    originalDeadline: new Date('2025-07-08T00:00:00'),
+    gracePeriodDeadline: new Date('2025-07-10T00:00:00')
+  }
 }

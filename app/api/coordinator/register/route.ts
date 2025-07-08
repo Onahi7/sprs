@@ -243,9 +243,18 @@ export async function GET(request: Request) {
     const isExport = searchParams.get("export") === "true"
     
     const coordinatorId = session.id!
+    
+    // Use chapterId from session to get all registrations for this chapter
+    const chapterId = session.chapterId
+    
+    if (!chapterId) {
+      return NextResponse.json({ error: "No chapter assigned to coordinator" }, { status: 400 })
+    }
 
-    // Build where conditions
-    const conditions = [eq(registrations.coordinatorRegisteredBy, coordinatorId)]
+    // Build where conditions - use chapterId for exports to include all registrations
+    const conditions = isExport 
+      ? [eq(registrations.chapterId, chapterId)]
+      : [eq(registrations.coordinatorRegisteredBy, coordinatorId)]
       // Add search filter (name or registration number)
     if (search) {
       const { ilike, or } = await import("drizzle-orm")

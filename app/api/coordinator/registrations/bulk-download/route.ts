@@ -49,11 +49,19 @@ export async function GET(request: Request) {
     const paymentFilter = searchParams.get("paymentStatus")
     
     const coordinatorId = session.id!
+    
+    // Use chapterId from session to get all registrations for this chapter
+    const chapterId = session.chapterId
+    
+    if (!chapterId) {
+      return NextResponse.json({ error: "No chapter assigned to coordinator" }, { status: 400 })
+    }
+    
     const db = getDbConnection()
 
-    // Build query conditions
+    // Build query conditions - use chapterId to include all registrations for this chapter
     const whereConditions = [
-      eq(registrations.coordinatorRegisteredBy, coordinatorId)
+      eq(registrations.chapterId, chapterId)
     ]
     
     // Add payment status filter (default to completed if not specified)

@@ -10,17 +10,25 @@ interface CoordinatorMobileHeaderProps {
 }
 
 export function CoordinatorMobileHeader({ onMenuClick }: CoordinatorMobileHeaderProps) {
-  const { timeLeft, isExpired } = useRegistrationCountdown()
+  const { timeLeft, isExpired, isInGracePeriod } = useRegistrationCountdown()
 
   return (
     <div className="fixed top-0 left-0 right-0 z-40 md:hidden bg-white dark:bg-gray-950 border-b flex flex-col shadow-sm">
       {/* Countdown Banner for Mobile */}
       {!isExpired && (
-        <div className="bg-red-50 dark:bg-red-900/30 border-b border-red-200 dark:border-red-700 px-3 py-1">
+        <div className={`border-b px-3 py-1 ${
+          isInGracePeriod 
+            ? "bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700" 
+            : "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700"
+        }`}>
           <div className="flex items-center justify-center gap-1">
-            <Clock className="h-3 w-3 text-red-600 dark:text-red-400" />
-            <span className="text-xs text-red-800 dark:text-red-300">
-              Registration closes in: {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m
+            <Clock className={`h-3 w-3 ${
+              isInGracePeriod ? "text-orange-600 dark:text-orange-400" : "text-red-600 dark:text-red-400"
+            }`} />
+            <span className={`text-xs ${
+              isInGracePeriod ? "text-orange-800 dark:text-orange-300" : "text-red-800 dark:text-red-300"
+            }`}>
+              {isInGracePeriod ? "Grace period" : "Registration closes in"}: {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m
             </span>
           </div>
         </div>
@@ -48,7 +56,10 @@ export function CoordinatorMobileHeader({ onMenuClick }: CoordinatorMobileHeader
         {/* Countdown Badge for Mobile */}
         <div className="flex-shrink-0">
           {!isExpired && (
-            <Badge variant="destructive" className="text-xs px-2 py-1">
+            <Badge 
+              variant={isInGracePeriod ? "secondary" : "destructive"} 
+              className="text-xs px-2 py-1"
+            >
               {timeLeft.days}d
             </Badge>
           )}
