@@ -202,7 +202,7 @@ export async function POST(request: Request) {
         sql`SELECT COUNT(*) as count FROM registrations WHERE payment_status = 'completed'`
       );
       const coordinatorResult = await db.execute(
-        sql`SELECT COUNT(*) as count FROM coordinators`
+        sql`SELECT COUNT(*) as count FROM chapter_coordinators`
       );
       const chapterResult = await db.execute(
         sql`SELECT COUNT(*) as count FROM chapters`

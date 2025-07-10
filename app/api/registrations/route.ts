@@ -1,12 +1,23 @@
 // filepath: c:\Users\HP\Downloads\sprs\app\api\registrations\route.ts
 import { NextResponse } from "next/server"
-import { registrations, chapters, schools, centers } from "@/db/schema"
+import { registrations, chapters, schools, centers, settings } from "@/db/schema"
 import { eq, desc, and } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { sendRegistrationConfirmationEmail, sendCoordinatorNotificationEmail } from "@/lib/email"
 import { getDbConnection } from "@/db/utils"
+import { getSystemSettings } from "@/lib/settings"
 
-export async function POST(request: Request) {  try {
+export async function POST(request: Request) {
+  try {
+    // Check if registrations are enabled
+    const systemSettings = await getSystemSettings();
+    if (!systemSettings.registrationEnabled) {
+      return NextResponse.json(
+        { error: "Registrations are currently closed", code: "REGISTRATIONS_CLOSED" },
+        { status: 403 }
+      );
+    }
+    
     const data = await request.json()
     const db = getDbConnection();
 
@@ -157,6 +168,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const limit = Number.parseInt(searchParams.get("limit") || "100")
     const chapterId = searchParams.get("chapterId") ? Number.parseInt(searchParams.get("chapterId") || "0") : null
+
+    // For public requests, check if registrations are enabled
+    if (!searchParams.get("adminRequest") && !searchParams.get("coordinatorRequest")) {
+      const systemSettings = await getSystemSettings();
+      if (!systemSettings.registrationEnabled) {
+        return NextResponse.json(
+          { error: "Registrations are currently closed", code: "REGISTRATIONS_CLOSED" },
+          { status: 403 }
+        );
+      }
+    }
 
     // Get recent registrations (limited to 100 by default)
     const recentRegistrations = await db.query.registrations.findMany({

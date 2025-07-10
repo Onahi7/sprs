@@ -2,6 +2,9 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import * as jose from 'jose'
+import { getDbConnection } from "@/db/utils"
+import { settings } from "@/db/schema"
+import { eq } from "drizzle-orm"
 
 interface DecodedToken {
   id?: number
@@ -11,16 +14,58 @@ interface DecodedToken {
   exp: number
 }
 
+// Check if registrations are enabled
+async function isRegistrationEnabled() {
+  try {
+    const db = getDbConnection();
+    const setting = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, 'system.registration_enabled'))
+      .limit(1);
+    
+    return setting.length === 0 || setting[0].value !== 'false';
+  } catch (error) {
+    console.error('Error checking registration status:', error);
+    return true; // Default to enabled if there's an error
+  }
+}
+
+// Check if payments are enabled
+async function isPaymentEnabled() {
+  try {
+    const db = getDbConnection();
+    const setting = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, 'system.payment_enabled'))
+      .limit(1);
+    
+    return setting.length === 0 || setting[0].value !== 'false';
+  } catch (error) {
+    console.error('Error checking payment status:', error);
+    return true; // Default to enabled if there's an error
+  }
+}
+
 export async function middleware(req: NextRequest) {
+  // Check registration status for protected routes first
+  if (req.nextUrl.pathname === "/register") {
+    const registrationEnabled = await isRegistrationEnabled();
+    if (!registrationEnabled) {
+      return NextResponse.redirect(new URL("/registrations-closed", req.url));
+    }
+  }
+
   // Public pages that don't require authentication
   const isPublicPage =
     req.nextUrl.pathname === "/" ||
-    req.nextUrl.pathname === "/register" ||
     req.nextUrl.pathname === "/status" ||
     req.nextUrl.pathname === "/sw.js" ||
+    req.nextUrl.pathname === "/registrations-closed" ||
+    req.nextUrl.pathname === "/coordinator/registrations-closed" ||
     req.nextUrl.pathname.startsWith("/payment") ||
     req.nextUrl.pathname.startsWith("/api/upload") ||
-    req.nextUrl.pathname.startsWith("/api/registrations") ||
     req.nextUrl.pathname.startsWith("/api/chapters") ||
     req.nextUrl.pathname.startsWith("/api/schools") ||
     req.nextUrl.pathname.startsWith("/api/centers") ||
@@ -28,6 +73,7 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith("/api/stats") ||
     req.nextUrl.pathname.startsWith("/api/testimonials") ||
     req.nextUrl.pathname.startsWith("/api/auth") ||
+    req.nextUrl.pathname.startsWith("/api/settings/status") ||
     req.nextUrl.pathname.startsWith("/api/admin/login") ||
     req.nextUrl.pathname.startsWith("/api/coordinator/login") ||
     req.nextUrl.pathname.startsWith("/api/supervisor") ||
@@ -47,6 +93,48 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.endsWith(".css") ||
     req.nextUrl.pathname.endsWith(".js") ||
     req.nextUrl.pathname.endsWith(".map");
+
+  // Block access to public registration page if registrations are disabled
+  // Only admins can bypass this restriction
+  if (req.nextUrl.pathname === "/register") {
+    const registrationEnabled = await isRegistrationEnabled();
+    if (!registrationEnabled) {
+      return NextResponse.redirect(new URL("/registrations-closed", req.url));
+    }
+  }
+  
+  // Block access to coordinator registration API and slot payment API if registrations/payments are disabled
+  if (
+    req.nextUrl.pathname.startsWith("/api/coordinator/register") || 
+    req.nextUrl.pathname.startsWith("/coordinator/register") ||
+    req.nextUrl.pathname.startsWith("/api/registrations")
+  ) {
+    const registrationEnabled = await isRegistrationEnabled();
+    if (!registrationEnabled) {
+      if (req.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Registrations are currently closed", code: "REGISTRATIONS_CLOSED" },
+          { status: 403 }
+        );
+      } else {
+        return NextResponse.redirect(new URL("/coordinator/registrations-closed", req.url));
+      }
+    }
+  }
+  
+  // Block access to payment endpoints if payments are disabled
+  if (
+    req.nextUrl.pathname.startsWith("/api/coordinator/payment/initialize") ||
+    req.nextUrl.pathname.startsWith("/api/coordinator/slots")
+  ) {
+    const paymentEnabled = await isPaymentEnabled();
+    if (!paymentEnabled) {
+      return NextResponse.json(
+        { error: "Payments are currently disabled", code: "PAYMENTS_DISABLED" },
+        { status: 403 }
+      );
+    }
+  }
 
   const token = req.cookies.get("auth_token")?.value
   const isAuth = !!token

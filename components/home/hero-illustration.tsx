@@ -22,10 +22,9 @@ export function HeroIllustration() {
         height="400"
         rx="10"
         fill="white"
-        className="dark:fill-gray-800"
+        className="dark:fill-gray-800 dark:stroke-gray-600"
         stroke="#cbd5e1"
         strokeWidth="2"
-        className="dark:stroke-gray-600"
       />
 
       {/* Document header */}
@@ -50,10 +49,9 @@ export function HeroIllustration() {
         height="30"
         rx="5"
         fill="#f1f5f9"
-        className="dark:fill-gray-700"
+        className="dark:fill-gray-700 dark:stroke-gray-600"
         stroke="#cbd5e1"
         strokeWidth="2"
-        className="dark:stroke-gray-600"
       />
       <rect
         x="280"
@@ -62,10 +60,9 @@ export function HeroIllustration() {
         height="30"
         rx="5"
         fill="#f1f5f9"
-        className="dark:fill-gray-700"
+        className="dark:fill-gray-700 dark:stroke-gray-600"
         stroke="#cbd5e1"
         strokeWidth="2"
-        className="dark:stroke-gray-600"
       />
 
       {/* Submit button */}

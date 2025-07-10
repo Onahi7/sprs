@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { BarChart3, Home, Settings, Users, BookOpen, Map, Building2, FileText, Mail, Zap, AlertTriangle, UserCog, Star, ClipboardList } from "lucide-react"
+import { BarChart3, Home, Settings, Users, BookOpen, Map, Building2, FileText, Mail, Zap, AlertTriangle, UserCog, Star, ClipboardList, CheckSquare, Search } from "lucide-react"
 import { LogoutButton } from "@/components/auth/logout-button"
 
 const navItems = [
@@ -32,6 +32,22 @@ const navItems = [
 		href: "/admin/results",
 		icon: ClipboardList,
 		description: "View and download results",
+		isNew: true,
+		featured: true
+	},
+	{
+		title: "Attendance",
+		href: "/admin/attendance",
+		icon: CheckSquare,
+		description: "Generate attendance lists",
+		isNew: true,
+		featured: true
+	},
+	{
+		title: "Registration Audit",
+		href: "/admin/registration-audit",
+		icon: Search,
+		description: "Audit registration and slot data",
 		isNew: true,
 		featured: true
 	},

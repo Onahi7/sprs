@@ -12,6 +12,7 @@ import { SplitTransactions } from "./split-transactions"
 import { SlotBalanceDisplay } from "./slot-balance-display"
 import { CoordinatorDuplicateAlert } from "./duplicate-alert"
 import { RegistrationCountdown } from "./registration-countdown"
+import { RegistrationClosedBanner } from "./registration-closed-banner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -148,6 +149,9 @@ export function CoordinatorDashboard() {  const { toast } = useToast()
     <div className="space-y-6">
       {/* Registration Deadline Alert */}
       <RegistrationCountdown />
+      
+      {/* Registration Closed Banner */}
+      <RegistrationClosedBanner />
       
       <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:justify-between md:items-center">
         <div className="min-w-0">
