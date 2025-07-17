@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { BarChart3, Home, School, Settings, Users, CreditCard, UserPlus, X } from "lucide-react"
+import { BarChart3, Home, School, Settings, Users, CreditCard, UserPlus, X, Trophy } from "lucide-react"
 import { LogoutButton } from "@/components/auth/logout-button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useEffect } from "react"
@@ -33,6 +33,11 @@ const navItems = [
 		title: "Registrations",
 		href: "/coordinator/registrations",
 		icon: Users,
+	},
+	{
+		title: "Results",
+		href: "/coordinator/results",
+		icon: Trophy,
 	},
 	{
 		title: "Centers",

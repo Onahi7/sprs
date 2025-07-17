@@ -289,13 +289,13 @@ export default function ResultSlipPage() {
                       <p className="text-sm text-gray-700">
                         Napps Nasarawa State Unified Certificate Examination
                       </p>
-                      <p className="text-xs text-gray-600 mt-1">(NNSUCE-2024)</p>
+                      <p className="text-xs text-gray-600 mt-1">(NNSUCE-2025)</p>
                     </div>
                   </div>
                   
                   {/* Right: Exam Date */}
                   <div className="text-right">
-                    <p className="text-sm text-red-600 font-medium">Exam Date: 06/06/24</p>
+                    <p className="text-sm text-red-600 font-medium">Exam Date: 12/07/2025</p>
                   </div>
                 </div>
                 

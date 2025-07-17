@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Search, Download, Users, BookOpen, Trophy, FileText } from "lucide-react"
+import { Loader2, Search, Download, Users, BookOpen, Trophy, FileText, Medal, Award } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { SubjectsManagement } from "./subjects-management"
 import { ResultEntryUsersManagement } from "./result-entry-users-management"
@@ -86,6 +86,26 @@ export function AdminResultsManagement() {
     averageScore: 0,
     totalSubjects: 0
   })
+  const [chapterBest10, setChapterBest10] = useState<Array<{
+    chapter: string;
+    students: Array<{
+      registrationNumber: string;
+      name: string;
+      totalScore: number;
+      averagePercentage: number;
+      overallGrade: string;
+      position: number;
+    }>;
+  }>>([])
+  const [overallBest10, setOverallBest10] = useState<Array<{
+    registrationNumber: string;
+    name: string;
+    chapterName: string;
+    totalScore: number;
+    averagePercentage: number;
+    overallGrade: string;
+    position: number;
+  }>>([])
   const { toast } = useToast()
 
   useEffect(() => {
@@ -99,6 +119,7 @@ export function AdminResultsManagement() {
   useEffect(() => {
     filterResults()
     calculateStats()
+    calculateBestPerformers()
   }, [groupedResults, searchTerm, selectedChapter, selectedClass, selectedSubject])
 
   const fetchData = async () => {
@@ -244,6 +265,63 @@ export function AdminResultsManagement() {
     })
   }
 
+  const calculateBestPerformers = () => {
+    // Calculate overall best 10 performers
+    const allStudents = Object.values(groupedResults)
+      .map(studentData => ({
+        registrationNumber: studentData.student.registrationNumber,
+        name: `${studentData.student.firstName} ${studentData.student.lastName}`,
+        chapterName: studentData.student.chapterName,
+        totalScore: studentData.totalScore,
+        averagePercentage: studentData.averagePercentage,
+        overallGrade: studentData.overallGrade,
+        position: 0
+      }))
+      .sort((a, b) => b.totalScore - a.totalScore || b.averagePercentage - a.averagePercentage)
+      .slice(0, 10)
+      .map((student, index) => ({
+        ...student,
+        position: index + 1
+      }))
+
+    setOverallBest10(allStudents)
+
+    // Calculate best 10 per chapter
+    const chapterGroups: { [chapter: string]: typeof allStudents } = {}
+    
+    Object.values(groupedResults).forEach(studentData => {
+      const chapterName = studentData.student.chapterName
+      if (!chapterGroups[chapterName]) {
+        chapterGroups[chapterName] = []
+      }
+      
+      chapterGroups[chapterName].push({
+        registrationNumber: studentData.student.registrationNumber,
+        name: `${studentData.student.firstName} ${studentData.student.lastName}`,
+        chapterName: studentData.student.chapterName,
+        totalScore: studentData.totalScore,
+        averagePercentage: studentData.averagePercentage,
+        overallGrade: studentData.overallGrade,
+        position: 0
+      })
+    })
+
+    const chapterBest = Object.entries(chapterGroups)
+      .map(([chapter, students]) => ({
+        chapter,
+        students: students
+          .sort((a, b) => b.totalScore - a.totalScore || b.averagePercentage - a.averagePercentage)
+          .slice(0, 10)
+          .map((student, index) => ({
+            ...student,
+            position: index + 1
+          }))
+      }))
+      .sort((a, b) => a.chapter.localeCompare(b.chapter))
+
+    setChapterBest10(chapterBest)
+  }
+
   const exportResults = () => {
     const csvData = []
     const headers = [
@@ -289,6 +367,80 @@ export function AdminResultsManagement() {
     toast({
       title: "Export Complete",
       description: "Results exported successfully"
+    })
+  }
+
+  const exportChapterBest = () => {
+    const csvData = []
+    const headers = [
+      "Chapter", "Position", "Registration Number", "Student Name", "Total Score", "Average %", "Overall Grade"
+    ]
+    csvData.push(headers.join(","))
+
+    chapterBest10.forEach(chapterData => {
+      chapterData.students.forEach(student => {
+        const row = [
+          chapterData.chapter,
+          student.position,
+          student.registrationNumber,
+          `"${student.name}"`,
+          student.totalScore,
+          student.averagePercentage.toFixed(1),
+          student.overallGrade
+        ]
+        csvData.push(row.join(","))
+      })
+    })
+
+    const blob = new Blob([csvData.join("\n")], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `napps-chapter-best-10-${new Date().toISOString().split("T")[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export Complete",
+      description: "Chapter best performers exported successfully"
+    })
+  }
+
+  const exportOverallBest = () => {
+    const csvData = []
+    const headers = [
+      "Position", "Registration Number", "Student Name", "Chapter", "Total Score", "Average %", "Overall Grade"
+    ]
+    csvData.push(headers.join(","))
+
+    overallBest10.forEach(student => {
+      const row = [
+        student.position,
+        student.registrationNumber,
+        `"${student.name}"`,
+        student.chapterName,
+        student.totalScore,
+        student.averagePercentage.toFixed(1),
+        student.overallGrade
+      ]
+      csvData.push(row.join(","))
+    })
+
+    const blob = new Blob([csvData.join("\n")], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `napps-overall-best-10-${new Date().toISOString().split("T")[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export Complete",
+      description: "Overall best performers exported successfully"
     })
   }
 
@@ -361,6 +513,14 @@ export function AdminResultsManagement() {
           <TabsTrigger value="results">
             <FileText className="h-4 w-4 mr-2" />
             Results Overview
+          </TabsTrigger>
+          <TabsTrigger value="chapter-best">
+            <Medal className="h-4 w-4 mr-2" />
+            Chapter Best 10
+          </TabsTrigger>
+          <TabsTrigger value="overall-best">
+            <Award className="h-4 w-4 mr-2" />
+            Overall Best 10
           </TabsTrigger>
           <TabsTrigger value="subjects">
             <BookOpen className="h-4 w-4 mr-2" />
@@ -535,6 +695,205 @@ export function AdminResultsManagement() {
               {Object.keys(filteredResults).length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   No results found matching your criteria
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="chapter-best" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Medal className="h-5 w-5 text-yellow-600" />
+                    Chapter Best 10 Performers
+                  </CardTitle>
+                  <CardDescription>
+                    Top 10 performing students from each chapter
+                  </CardDescription>
+                </div>
+                <Button onClick={exportChapterBest} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Chapter Best
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-8">
+                {chapterBest10.map((chapterData) => (
+                  <div key={chapterData.chapter} className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-sm px-3 py-1">
+                        {chapterData.chapter}
+                      </Badge>
+                      <span className="text-sm text-gray-500">
+                        ({chapterData.students.length} students)
+                      </span>
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-16">Position</TableHead>
+                            <TableHead className="w-32">Reg. Number</TableHead>
+                            <TableHead className="min-w-48">Student Name</TableHead>
+                            <TableHead className="w-24 text-center">Total Score</TableHead>
+                            <TableHead className="w-24 text-center">Average %</TableHead>
+                            <TableHead className="w-20 text-center">Grade</TableHead>
+                            <TableHead className="w-24">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {chapterData.students.map((student) => (
+                            <TableRow key={student.registrationNumber}>
+                              <TableCell className="text-center font-bold">
+                                <div className="flex items-center justify-center">
+                                  {student.position === 1 && <Trophy className="h-4 w-4 text-yellow-500 mr-1" />}
+                                  {student.position === 2 && <Medal className="h-4 w-4 text-gray-400 mr-1" />}
+                                  {student.position === 3 && <Medal className="h-4 w-4 text-orange-500 mr-1" />}
+                                  {student.position}
+                                </div>
+                              </TableCell>
+                              <TableCell className="font-mono text-sm">
+                                {student.registrationNumber}
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-medium">{student.name}</div>
+                              </TableCell>
+                              <TableCell className="text-center font-medium">
+                                {student.totalScore}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {student.averagePercentage.toFixed(1)}%
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge 
+                                  variant={student.overallGrade === "F" ? "destructive" : 
+                                           student.overallGrade === "A" ? "default" : "secondary"}
+                                >
+                                  {student.overallGrade}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(`/student/results/${student.registrationNumber}/slip`, '_blank')}
+                                  title="View Result Slip"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ))}
+                
+                {chapterBest10.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No chapter results available
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="overall-best" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-purple-600" />
+                    Overall Best 10 Performers
+                  </CardTitle>
+                  <CardDescription>
+                    Top 10 performing students across all chapters in the examination
+                  </CardDescription>
+                </div>
+                <Button onClick={exportOverallBest} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Overall Best
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Position</TableHead>
+                      <TableHead className="w-32">Reg. Number</TableHead>
+                      <TableHead className="min-w-48">Student Name</TableHead>
+                      <TableHead className="w-32">Chapter</TableHead>
+                      <TableHead className="w-24 text-center">Total Score</TableHead>
+                      <TableHead className="w-24 text-center">Average %</TableHead>
+                      <TableHead className="w-20 text-center">Grade</TableHead>
+                      <TableHead className="w-24">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {overallBest10.map((student) => (
+                      <TableRow key={student.registrationNumber} className={student.position <= 3 ? "bg-yellow-50" : ""}>
+                        <TableCell className="text-center font-bold">
+                          <div className="flex items-center justify-center">
+                            {student.position === 1 && <Trophy className="h-5 w-5 text-yellow-500 mr-1" />}
+                            {student.position === 2 && <Medal className="h-5 w-5 text-gray-400 mr-1" />}
+                            {student.position === 3 && <Medal className="h-5 w-5 text-orange-500 mr-1" />}
+                            <span className={student.position <= 3 ? "text-lg font-bold" : ""}>{student.position}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {student.registrationNumber}
+                        </TableCell>
+                        <TableCell>
+                          <div className={`font-medium ${student.position <= 3 ? "text-lg" : ""}`}>
+                            {student.name}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{student.chapterName}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-medium">
+                          {student.totalScore}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {student.averagePercentage.toFixed(1)}%
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge 
+                            variant={student.overallGrade === "F" ? "destructive" : 
+                                     student.overallGrade === "A" ? "default" : "secondary"}
+                          >
+                            {student.overallGrade}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(`/student/results/${student.registrationNumber}/slip`, '_blank')}
+                            title="View Result Slip"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {overallBest10.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No overall results available
                 </div>
               )}
             </CardContent>

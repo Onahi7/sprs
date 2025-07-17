@@ -13,6 +13,7 @@ export function DevTools() {
     setMounted(true);
   }, []);
   
+  // Don't render anything during SSR or in production
   if (!mounted || process.env.NODE_ENV === 'production') {
     return null;
   }
@@ -20,7 +21,7 @@ export function DevTools() {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {isOpen ? (
-        <div className="bg-white rounded-lg shadow-lg p-4 border w-64">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 border w-64">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">Developer Tools</h3>
             <Button 

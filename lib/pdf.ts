@@ -192,7 +192,7 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     doc.setTextColor(...secondaryText);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('Academic Session: 2024/2025', 105, yPos, { align: 'center' });
+    doc.text('Academic Session: 2025/2026', 105, yPos, { align: 'center' });
 
     // Main content container - more compact
     yPos += 15; // Reduced from 20
@@ -571,7 +571,7 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
     doc.setFont('helvetica', 'normal');
     doc.text('Besides SALAMATU Hall Lafia, Jos Road', headerX, yPos + 14);
     doc.text('Napps Nasarawa State Unified Certificate Examination', headerX, yPos + 18);
-    doc.text('(NNSUCE-2024)', headerX, yPos + 22);
+    doc.text('(NNSUCE-2025)', headerX, yPos + 22);
 
     yPos += 35;
 
@@ -589,7 +589,7 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
     doc.setTextColor(...redText);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Exam Date: 06/06/24', cardX + cardWidth - 10, yPos + 5, { align: 'right' });
+    doc.text('Exam Date: 12/07/2025', cardX + cardWidth - 10, yPos + 5, { align: 'right' });
       // Candidate Details Section
     doc.setTextColor(...primaryText);
     doc.setFontSize(12);

@@ -35,8 +35,8 @@ export default function RootLayout({
             storageKey="napps-theme"
           >
             {children}
-            <DevTools />
             <Toaster />
+            <DevTools />
           </ThemeProvider>
         </ErrorBoundary>
       </body>
