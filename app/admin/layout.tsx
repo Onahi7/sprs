@@ -10,7 +10,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       <AdminSidebar duplicatesCount={duplicatesCount} />
-      <div className="flex-1 p-8">{children}</div>
+      <div className="flex-1 p-8 md:ml-64">{children}</div>
       <QuickAccessMenu />
     </div>
   )

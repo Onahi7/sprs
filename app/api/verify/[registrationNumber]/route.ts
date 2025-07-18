@@ -1,15 +1,12 @@
 
 import { NextResponse } from "next/server"
-import { db } from "@/db"
+import { getDbConnection } from "@/db"
 import { registrations, studentResults, subjects, chapters, centers } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 export async function GET(request: Request, { params }: { params: { registrationNumber: string } }) {
   try {
-    // Check if database connection is available
-    if (!db) {
-      return NextResponse.json({ error: "Database connection not available" }, { status: 500 })
-    }
+    const db = getDbConnection()
     
     const { registrationNumber } = await params
     
@@ -19,7 +16,7 @@ export async function GET(request: Request, { params }: { params: { registration
 
 
     // Get registration details
-    const registration = await db?.query.registrations.findFirst({
+    const registration = await db.query.registrations.findFirst({
       where: eq(registrations.registrationNumber, registrationNumber),
       with: {
         chapter: true,
@@ -36,7 +33,7 @@ export async function GET(request: Request, { params }: { params: { registration
     }
 
     // Get student results
-    const results = await db?.select({
+    const results = await db.select({
       id: studentResults.id,
       registrationId: studentResults.registrationId,
       subjectId: studentResults.subjectId,
@@ -57,7 +54,7 @@ export async function GET(request: Request, { params }: { params: { registration
     let centerPosition = 0
     if (results.length > 0 && registration.centerId) {
       try {
-        const centerResults = await db?.select({
+        const centerResults = await db.select({
           registrationId: studentResults.registrationId,
           score: studentResults.score
         })

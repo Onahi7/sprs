@@ -65,6 +65,8 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname === "/registrations-closed" ||
     req.nextUrl.pathname === "/coordinator/registrations-closed" ||
     req.nextUrl.pathname.startsWith("/payment") ||
+    req.nextUrl.pathname.startsWith("/verify") ||
+    req.nextUrl.pathname.startsWith("/api/verify") ||
     req.nextUrl.pathname.startsWith("/api/upload") ||
     req.nextUrl.pathname.startsWith("/api/chapters") ||
     req.nextUrl.pathname.startsWith("/api/schools") ||

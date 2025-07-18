@@ -13,7 +13,7 @@ export function CoordinatorMobileHeader({ onMenuClick }: CoordinatorMobileHeader
   const { timeLeft, isExpired, isInGracePeriod } = useRegistrationCountdown()
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 md:hidden bg-white dark:bg-gray-950 border-b flex flex-col shadow-sm">
+    <div className="fixed top-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-950 border-b flex flex-col shadow-sm">
       {/* Countdown Banner for Mobile */}
       {!isExpired && (
         <div className={`border-b px-3 py-1 ${

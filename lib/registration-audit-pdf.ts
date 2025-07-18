@@ -261,7 +261,7 @@ function addSlotRegistrationsTable(
   const headers = [
     'S/N',
     'Reg. No.',
-    'Student Name',
+    'Pupils Name',
     'School',
     'Center',
     'Slots',
@@ -339,7 +339,7 @@ function addSingularRegistrationsTable(
   const headers = [
     'S/N',
     'Registration No.',
-    'Student Name',
+    'Pupils Name',
     'School',
     'Center',
     'Date'

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   try {
     const session = await getSession()
     
-    if (!session || !session.email) {
+    if (!session || !session.id || session.role !== "coordinator") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
     // Get coordinator info
     const coordinator = await db.query.chapterCoordinators.findFirst({
-      where: eq(chapterCoordinators.email, session.email),
+      where: eq(chapterCoordinators.id, session.id),
       with: {
         chapter: true
       }
@@ -107,10 +107,20 @@ export async function GET(request: Request) {
     // Get center best 10 (top performers across all centers)
     const centerBest = students.slice(0, 10)
 
+    // Get center information for this chapter
+    const chapterCenters = await db.query.centers.findMany({
+      where: eq(centers.chapterId, coordinator.chapterId!),
+      columns: {
+        id: true,
+        name: true
+      }
+    })
+
     return NextResponse.json({
       students,
       chapterBest,
       centerBest,
+      centers: chapterCenters,
       coordinator: {
         id: coordinator.id,
         name: coordinator.name,

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   try {
     const session = await getSession()
     
-    if (!session || !session.email) {
+    if (!session || !session.id || session.role !== "coordinator") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
     // Get coordinator info
     const coordinator = await db.query.chapterCoordinators.findFirst({
-      where: eq(chapterCoordinators.email, session.email),
+      where: eq(chapterCoordinators.id, session.id),
       with: {
         chapter: true
       }

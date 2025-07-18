@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Trophy, Users, School, FileText, Medal, TrendingUp, BarChart3 } from "lucide-react"
+import { Download, Trophy, School, FileText, Medal, TrendingUp, BarChart3, Users, Filter } from "lucide-react"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Student {
   id: number
@@ -17,6 +18,7 @@ interface Student {
   middleName?: string
   schoolName: string
   centerName: string
+  centerId: number
   results: Array<{
     subjectName: string
     score: number
@@ -44,6 +46,9 @@ export function CoordinatorResultsManagement() {
   const [loading, setLoading] = useState(true)
   const [coordinatorInfo, setCoordinatorInfo] = useState<CoordinatorInfo | null>(null)
   const [centers, setCenters] = useState<Array<{ id: number; name: string }>>([])
+  const [selectedCenter, setSelectedCenter] = useState<string>('all')
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([])
+  const [centerBestData, setCenterBestData] = useState<Map<string, Student[]>>(new Map())
   const [performanceStats, setPerformanceStats] = useState({
     totalStudents: 0,
     averageScore: 0,
@@ -58,6 +63,39 @@ export function CoordinatorResultsManagement() {
     fetchCoordinatorInfo()
     fetchResults()
   }, [])
+
+  useEffect(() => {
+    // Filter students based on selected center
+    if (selectedCenter === 'all') {
+      setFilteredStudents(students)
+    } else {
+      console.log(`Filtering for center ID: ${selectedCenter}`)
+      const filtered = students.filter(student => student.centerId === parseInt(selectedCenter))
+      console.log(`Found ${filtered.length} students for center ID ${selectedCenter} out of ${students.length} total students`)
+      setFilteredStudents(filtered)
+    }
+  }, [students, selectedCenter])
+
+  useEffect(() => {
+    // Group students by center for center-best functionality
+    const centerGroups = new Map<string, Student[]>()
+    
+    students.forEach(student => {
+      const centerKey = `${student.centerId}`
+      if (!centerGroups.has(centerKey)) {
+        centerGroups.set(centerKey, [])
+      }
+      centerGroups.get(centerKey)!.push(student)
+    })
+
+    // Sort each center's students and keep only top 10
+    centerGroups.forEach((centerStudents, centerKey) => {
+      centerStudents.sort((a, b) => b.totalScore - a.totalScore)
+      centerGroups.set(centerKey, centerStudents.slice(0, 10))
+    })
+
+    setCenterBestData(centerGroups)
+  }, [students])
 
   const fetchCoordinatorInfo = async () => {
     try {
@@ -86,6 +124,11 @@ export function CoordinatorResultsManagement() {
         setStudents(data.students || [])
         setChapterBest(data.chapterBest || [])
         setCenterBest(data.centerBest || [])
+        
+        // Set centers from the API response
+        if (data.centers && data.centers.length > 0) {
+          setCenters(data.centers)
+        }
         
         // Calculate performance statistics
         const students = data.students || []
@@ -118,14 +161,13 @@ export function CoordinatorResultsManagement() {
     }
   }
 
-  const handleExport = async (type: 'chapter' | 'center' | 'all' | 'performance') => {
+  const handleExport = async (type: 'chapter' | 'center-best' | 'all' | 'center') => {
     try {
-      let endpoint = `/api/coordinator/results/export?type=${type}`
-      let defaultFilename = `${coordinatorInfo?.chapterName || 'chapter'}-results-${type}.csv`
+      let endpoint = `/api/coordinator/results/export-pdf?type=${type}`
       
-      if (type === 'performance') {
-        endpoint = `/api/coordinator/results/export?type=performance`
-        defaultFilename = `${coordinatorInfo?.chapterName || 'chapter'}-performance-summary.csv`
+      // Add center filter if not 'all'
+      if (selectedCenter !== 'all') {
+        endpoint += `&centerId=${selectedCenter}`
       }
       
       const response = await fetch(endpoint)
@@ -134,7 +176,7 @@ export function CoordinatorResultsManagement() {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = defaultFilename
+        a.download = `${coordinatorInfo?.chapterName || 'chapter'}-results-${type}.pdf`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -252,6 +294,34 @@ export function CoordinatorResultsManagement() {
         </Card>
       )}
 
+      {/* Center Filter */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Filter Results</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium">Select Center:</label>
+            <Select value={selectedCenter} onValueChange={setSelectedCenter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select a center" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Centers</SelectItem>
+                {centers.map(center => (
+                  <SelectItem key={center.id} value={center.id.toString()}>
+                    {center.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-muted-foreground">
+              Showing {filteredStudents.length} students
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Performance Overview */}
       {!loading && performanceStats.totalStudents > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -344,13 +414,13 @@ export function CoordinatorResultsManagement() {
       {!loading && students.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Export Options</CardTitle>
+            <CardTitle className="text-lg">Export Options (PDF)</CardTitle>
             <CardDescription>
-              Download results data in various formats
+              Download results data as PDF with NAPPS logo
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 md:grid-cols-3">
               <Button onClick={() => handleExport('all')} className="gap-2" variant="outline">
                 <Download className="h-4 w-4" />
                 All Results
@@ -359,13 +429,9 @@ export function CoordinatorResultsManagement() {
                 <Trophy className="h-4 w-4" />
                 Chapter Best 10
               </Button>
-              <Button onClick={() => handleExport('center')} className="gap-2" variant="outline">
+              <Button onClick={() => handleExport('center-best')} className="gap-2" variant="outline">
                 <School className="h-4 w-4" />
-                Center Best 10
-              </Button>
-              <Button onClick={() => handleExport('performance')} className="gap-2" variant="outline">
-                <BarChart3 className="h-4 w-4" />
-                Performance Summary
+                Center Best (All Centers)
               </Button>
             </div>
           </CardContent>

@@ -112,12 +112,12 @@ export function AdminSidebar({ duplicatesCount = 0 }: { duplicatesCount?: number
 	const pathname = usePathname()
 
 	return (
-		<div className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-950 border-r">		<div className="p-6">
+		<div className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-950 border-r fixed left-0 top-0 h-full z-30">		<div className="p-6">
 			<h2 className="text-2xl font-bold">NAPPS</h2>
 			<p className="text-sm text-muted-foreground">Nasarawa Unified Exams</p>
 		</div>
 
-			<div className="flex-1 px-4 space-y-1">
+			<div className="flex-1 px-4 space-y-1 overflow-y-auto">
 				{navItems.map((item) => (
 					<Link
 						key={item.href}

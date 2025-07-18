@@ -129,7 +129,7 @@ export function CoordinatorSidebar({ isOpen = false, onClose }: CoordinatorSideb
 
 	// Desktop Sidebar
 	return (
-		<div className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-950 border-r">
+		<div className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-950 border-r fixed left-0 top-0 h-full z-30">
 			<SidebarContent pathname={pathname} onLinkClick={handleLinkClick} />
 		</div>
 	)
@@ -176,7 +176,7 @@ function SidebarContent({ pathname, onLinkClick, showCloseButton, onClose }: Sid
 				</Link>
 			</div>
 
-			<div className="flex-1 px-4 space-y-1">
+			<div className="flex-1 px-4 space-y-1 overflow-y-auto">
 				{navItems.map((item) => (
 					<Link
 						key={item.href}

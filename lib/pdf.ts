@@ -265,7 +265,7 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     addInfoRow('Registration Number', registration.registrationNumber, infoY, true);
     infoY += 12; // Reduced from 15
     
-    addInfoRow('Student Name', fullName.toUpperCase(), infoY);
+    addInfoRow('Pupils Name', fullName.toUpperCase(), infoY);
     infoY += 12; // Reduced from 15
     
     addInfoRow('Chapter', registration.chapter?.name || 'N/A', infoY);
@@ -423,7 +423,7 @@ export async function generateRegistrationSlipPDF(registration: RegistrationData
     fallbackDoc.text(`Registration Number: ${registration.registrationNumber}`, 20, 40);
     
     const fullName = `${registration.firstName} ${registration.middleName || ''} ${registration.lastName}`.trim();
-    fallbackDoc.text(`Student Name: ${fullName}`, 20, 50);
+    fallbackDoc.text(`Pupils Name: ${fullName}`, 20, 50);
     
     const schoolName = registration.schoolName || registration.school?.name || 'N/A';
     fallbackDoc.text(`School: ${schoolName}`, 20, 60);
@@ -609,12 +609,26 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
       
       doc.setTextColor(...secondaryText);
       doc.setFont('helvetica', 'normal');
-      doc.text(value, infoX + 45, y);
+      
+      // Calculate maximum width available for text (leave space for photo)
+      const maxTextWidth = cardWidth - 65; // 65 = 45 (photo width + margin) + 20 (padding)
+      const textWidth = doc.getTextWidth(value);
+      
+      if (textWidth > maxTextWidth) {
+        // Truncate text if it's too long
+        let truncatedValue = value;
+        while (doc.getTextWidth(truncatedValue + '...') > maxTextWidth && truncatedValue.length > 0) {
+          truncatedValue = truncatedValue.slice(0, -1);
+        }
+        doc.text(truncatedValue + '...', infoX + 45, y);
+      } else {
+        doc.text(value, infoX + 45, y);
+      }
     };
 
     const fullName = `${resultData.student.firstName} ${resultData.student.middleName || ''} ${resultData.student.lastName}`.trim().toUpperCase();
     
-    addInfoRow('Student Name', fullName, yPos);
+    addInfoRow('Pupils Name', fullName, yPos);
     yPos += 6;
     
     addInfoRow('Registration Number', resultData.student.registrationNumber, yPos);

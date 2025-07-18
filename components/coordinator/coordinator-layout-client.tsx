@@ -47,7 +47,7 @@ export function CoordinatorLayoutClient({ children }: { children: ReactNode }) {
       />
       
       {/* Main Content */}
-      <div className="flex-1 md:p-8 p-3 pt-24 md:pt-8">
+      <div className="flex-1 md:p-8 p-3 pt-24 md:pt-8 md:ml-64">
         {/* Registration Countdown Banner */}
         <div className="mb-6">
           <RegistrationCountdown compact />

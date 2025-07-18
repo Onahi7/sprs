@@ -30,7 +30,9 @@ export async function POST(request: Request) {
       { 
         id: coordinator.id, 
         role: "coordinator",
-        chapterId: coordinator.chapterId
+        chapterId: coordinator.chapterId,
+        email: coordinator.email,
+        name: coordinator.name
       },
       process.env.JWT_SECRET || "fallback-secret-key-change-in-production",
       { expiresIn: "24h" }
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
         name: coordinator.name,
         email: coordinator.email,
         chapterId: coordinator.chapterId,
-        chapterName: coordinator.chapter.name,
+        chapterName: coordinator.chapter?.name || 'Unknown Chapter',
       },
     })
   } catch (error) {

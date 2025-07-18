@@ -84,7 +84,9 @@ export async function getSession(): Promise<UserSession | null> {
       username: decoded.username,
       role: decoded.role,
       chapterId: decoded.chapterId,
-      chapterName: decoded.chapterName
+      chapterName: decoded.chapterName,
+      email: decoded.email,
+      name: decoded.name
     }
   } catch (error) {
     // Only log in development
