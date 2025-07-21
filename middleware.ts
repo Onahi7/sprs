@@ -66,6 +66,7 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname === "/coordinator/registrations-closed" ||
     req.nextUrl.pathname.startsWith("/payment") ||
     req.nextUrl.pathname.startsWith("/verify") ||
+    req.nextUrl.pathname.startsWith("/student/results") ||
     req.nextUrl.pathname.startsWith("/api/verify") ||
     req.nextUrl.pathname.startsWith("/api/upload") ||
     req.nextUrl.pathname.startsWith("/api/chapters") ||
@@ -80,6 +81,7 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith("/api/coordinator/login") ||
     req.nextUrl.pathname.startsWith("/api/supervisor") ||
     req.nextUrl.pathname.startsWith("/api/results") ||
+    req.nextUrl.pathname.startsWith("/api/registrations/") || // Allow individual registration lookups
     req.nextUrl.pathname.startsWith("/api/students") ||
     req.nextUrl.pathname.startsWith("/api/admin/subjects") ||
     req.nextUrl.pathname.startsWith("/supervisor/login") ||
@@ -109,7 +111,7 @@ export async function middleware(req: NextRequest) {
   if (
     req.nextUrl.pathname.startsWith("/api/coordinator/register") || 
     req.nextUrl.pathname.startsWith("/coordinator/register") ||
-    req.nextUrl.pathname.startsWith("/api/registrations")
+    (req.nextUrl.pathname === "/api/registrations" && req.method === "POST")
   ) {
     const registrationEnabled = await isRegistrationEnabled();
     if (!registrationEnabled) {
