@@ -422,7 +422,7 @@ export default function ResultSlipPage() {
               {/* Professional Signature Section */}
               <div className="flex justify-between items-end mb-8">
                 <div className="text-left">
-                  <p className="italic text-black text-lg mb-1">Ogah Omaha Ogah</p>
+                  <p className="text-black text-lg mb-1 font-serif" style={{ fontFamily: 'serif', fontStyle: 'italic', fontWeight: '400' }}>Ogah Omaku Ogiri</p>
                   <p className="font-bold text-black text-sm mb-3">State Chairman</p>
                   <div className="border-b-2 border-black w-40"></div>
                 </div>

@@ -803,8 +803,8 @@ export async function generateResultSlipPDF(resultData: ResultSlipData): Promise
     // Signature name
     doc.setTextColor(...primaryText);
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Ogah Omaha Ogah', signatureX, yPos);
+    doc.setFont('times', 'italic'); // Changed to Times italic for calligraphy-like appearance
+    doc.text('Ogah Omaku Ogiri', signatureX, yPos);
     
     yPos += 4;
     doc.setFontSize(8);
