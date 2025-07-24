@@ -87,7 +87,6 @@ export default function StudentResultsPage() {
     const totalScore = studentResults.reduce((sum, result) => sum + result.score, 0)
     const totalMaxScore = studentResults.reduce((sum, result) => sum + result.subject.maxScore, 0)
     const averagePercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0
-    const overallGrade = calculateOverallGrade(averagePercentage)
 
     return {
       student: {
@@ -105,19 +104,8 @@ export default function StudentResultsPage() {
       results: resultsBySubject,
       totalScore,
       totalMaxScore,
-      averagePercentage,
-      overallGrade,
-      isPassed: averagePercentage >= 50 // Assuming 50% is pass mark
+      averagePercentage
     }
-  }
-
-  const calculateOverallGrade = (percentage: number): string => {
-    if (percentage >= 80) return "A"
-    if (percentage >= 70) return "B"
-    if (percentage >= 60) return "C"
-    if (percentage >= 50) return "D"
-    if (percentage >= 40) return "E"
-    return "F"
   }
 
   const downloadResultSlip = () => {
@@ -262,7 +250,6 @@ export default function StudentResultsPage() {
                           <th className="text-center py-3 px-4 font-semibold">Score</th>
                           <th className="text-center py-3 px-4 font-semibold">Max Score</th>
                           <th className="text-center py-3 px-4 font-semibold">Percentage</th>
-                          <th className="text-center py-3 px-4 font-semibold">Grade</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -276,17 +263,6 @@ export default function StudentResultsPage() {
                               <td className="text-center py-3 px-4">{result.score}</td>
                               <td className="text-center py-3 px-4">{subject.maxScore}</td>
                               <td className="text-center py-3 px-4">{percentage.toFixed(1)}%</td>
-                              <td className="text-center py-3 px-4">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  result.grade === 'A' ? 'bg-green-100 text-green-800' :
-                                  result.grade === 'B' ? 'bg-blue-100 text-blue-800' :
-                                  result.grade === 'C' ? 'bg-yellow-100 text-yellow-800' :
-                                  result.grade === 'D' ? 'bg-orange-100 text-orange-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {result.grade}
-                                </span>
-                              </td>
                             </tr>
                           )
                         })}
@@ -302,7 +278,7 @@ export default function StudentResultsPage() {
                   <CardTitle>Overall Performance</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-blue-600">{results.totalScore}</div>
                       <div className="text-sm text-gray-600">Total Score</div>
@@ -314,20 +290,6 @@ export default function StudentResultsPage() {
                     <div className="text-center">
                       <div className="text-2xl font-bold text-purple-600">{results.averagePercentage.toFixed(1)}%</div>
                       <div className="text-sm text-gray-600">Average</div>
-                    </div>
-                    <div className="text-center">
-                      <div className={`text-2xl font-bold ${results.isPassed ? 'text-green-600' : 'text-red-600'}`}>
-                        {results.overallGrade}
-                      </div>
-                      <div className="text-sm text-gray-600">Overall Grade</div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 text-center">
-                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold ${
-                      results.isPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {results.isPassed ? 'PASSED' : 'FAILED'}
                     </div>
                   </div>
                 </CardContent>

@@ -18,6 +18,7 @@ import {
   AlertTriangle
 } from "lucide-react"
 import { PaymentErrorHandler } from "@/components/coordinator/payment-error-handler"
+import { RefundDisclaimer } from "@/components/shared/refund-disclaimer"
 
 interface PaymentResult {
   success: boolean
@@ -362,6 +363,11 @@ function PaymentCallbackContent() {
                     )}
                   </div>
                 </div>
+              )}
+
+              {/* Refund Policy Reminder for Successful Payments */}
+              {result.status === 'success' && (
+                <RefundDisclaimer variant="compact" showDocumentLink={false} />
               )}
 
               {/* Pending Payment Message */}

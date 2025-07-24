@@ -455,11 +455,10 @@ export interface ResultSlipData {
     name: string;
     maxScore: number;
   }>;
-  results: { [subjectId: number]: { score: number; grade: string } };
+  results: { [subjectId: number]: { score: number } };
   totalScore: number;
   totalMaxScore: number;
   averagePercentage: number;
-  overallGrade: string;
   centerPosition?: number;
 }
 

@@ -25,6 +25,7 @@ import {
   Search,
   Eye
 } from "lucide-react"
+import { RefundDisclaimer } from "@/components/shared/refund-disclaimer"
 
 interface SlotData {
   availableSlots: number
@@ -343,7 +344,10 @@ export function SlotsManagement() {
                 • You can track your usage and purchase history in the other tabs
               </p>
             </CardContent>
-          </Card>        </TabsContent>
+          </Card>
+
+          {/* Refund Disclaimer */}
+          <RefundDisclaimer variant="alert" showDocumentLink={true} />        </TabsContent>
         
         <TabsContent value="history">
           <Card>

@@ -14,6 +14,7 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog"
 import { CreditCard, Check, Star, Zap } from "lucide-react"
+import { RefundDisclaimer } from "@/components/shared/refund-disclaimer"
 
 interface SlotPackage {
   id: number
@@ -217,6 +218,9 @@ export function SlotPurchaseCard({
                 <li>• You can start registering students right away</li>
               </ul>
             </div>
+
+            {/* Refund Disclaimer */}
+            <RefundDisclaimer variant="compact" showDocumentLink={true} />
           </div>
 
           <DialogFooter>

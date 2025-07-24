@@ -146,13 +146,6 @@ export async function GET(request: NextRequest) {
         const totalScore = results.reduce((sum, result) => sum + result.score, 0)
         const totalMaxScore = results.reduce((sum, result) => sum + result.subject.maxScore, 0)
         const averagePercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0
-        
-        let overallGrade = "F"
-        if (averagePercentage >= 80) overallGrade = "A"
-        else if (averagePercentage >= 70) overallGrade = "B"
-        else if (averagePercentage >= 60) overallGrade = "C"
-        else if (averagePercentage >= 50) overallGrade = "D"
-        else if (averagePercentage >= 40) overallGrade = "E"
 
         const resultSlipData = {
           student: {
@@ -171,7 +164,6 @@ export async function GET(request: NextRequest) {
           totalScore,
           totalMaxScore,
           averagePercentage,
-          overallGrade,
           centerPosition
         }
 

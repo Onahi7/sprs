@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { RefundDisclaimer } from "@/components/shared/refund-disclaimer"
 
 type Chapter = {
   id: number
@@ -89,6 +90,9 @@ export function PaymentSummaryStep({ data, onSubmit, onPrevious }: PaymentSummar
           By clicking "Proceed to Payment", you will be redirected to our secure payment gateway.
         </p>
       </div>
+
+      {/* Refund Disclaimer */}
+      <RefundDisclaimer variant="alert" showDocumentLink={true} />
 
       <div className="flex justify-between mt-6">
         <Button type="button" variant="outline" onClick={onPrevious}>

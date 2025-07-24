@@ -90,7 +90,6 @@ export default function ResultSlipPage() {
     const totalScore = studentResults.reduce((sum, result) => sum + result.score, 0)
     const totalMaxScore = studentResults.reduce((sum, result) => sum + result.subject.maxScore, 0)
     const averagePercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0
-    const overallGrade = calculateOverallGrade(averagePercentage)
 
     return {
       student: {
@@ -108,19 +107,8 @@ export default function ResultSlipPage() {
       results: resultsBySubject,
       totalScore,
       totalMaxScore,
-      averagePercentage,
-      overallGrade,
-      isPassed: averagePercentage >= 50
+      averagePercentage
     }
-  }
-
-  const calculateOverallGrade = (percentage: number): string => {
-    if (percentage >= 80) return "A"
-    if (percentage >= 70) return "B"
-    if (percentage >= 60) return "C"
-    if (percentage >= 50) return "D"
-    if (percentage >= 40) return "E"
-    return "F"
   }
 
   const handlePrint = async () => {

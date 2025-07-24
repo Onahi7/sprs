@@ -27,19 +27,18 @@ export async function GET(request: NextRequest) {
         { id: 8, name: 'French Language', maxScore: 100 }
       ],
       results: {
-        1: { score: 85, grade: 'A' },
-        2: { score: 78, grade: 'B+' },
-        3: { score: 92, grade: 'A+' },
-        4: { score: 88, grade: 'A' },
-        5: { score: 76, grade: 'B+' },
-        6: { score: 81, grade: 'A-' },
-        7: { score: 89, grade: 'A' },
-        8: { score: 73, grade: 'B' }
+        1: { score: 85 },
+        2: { score: 78 },
+        3: { score: 92 },
+        4: { score: 88 },
+        5: { score: 76 },
+        6: { score: 81 },
+        7: { score: 89 },
+        8: { score: 73 }
       },
       totalScore: 662,
       totalMaxScore: 800,
       averagePercentage: 82.75,
-      overallGrade: 'A',
       centerPosition: 3
     };
 

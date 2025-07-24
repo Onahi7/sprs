@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
+import { RefundDisclaimer } from "@/components/shared/refund-disclaimer"
 
 export default function PaymentInitializePage() {
   const router = useRouter()
@@ -63,7 +64,12 @@ export default function PaymentInitializePage() {
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-center py-8">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-center text-muted-foreground">This may take a few moments</p>
+            <p className="text-center text-muted-foreground mb-6">This may take a few moments</p>
+            
+            {/* Refund Disclaimer */}
+            <div className="w-full max-w-md mt-4">
+              <RefundDisclaimer variant="compact" showDocumentLink={false} />
+            </div>
           </CardContent>
         </Card>
       </div>

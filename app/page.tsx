@@ -290,8 +290,13 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-white/80 hover:text-white transition-colors">
+                  <Link href="/docs/terms-of-service" className="text-white/80 hover:text-white transition-colors">
                     Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/docs/refund-policy" className="text-white/80 hover:text-white transition-colors">
+                    Refund Policy
                   </Link>
                 </li>
                 <li>

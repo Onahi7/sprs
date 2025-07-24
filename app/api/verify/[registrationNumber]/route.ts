@@ -38,7 +38,6 @@ export async function GET(request: Request, { params }: { params: { registration
       registrationId: studentResults.registrationId,
       subjectId: studentResults.subjectId,
       score: studentResults.score,
-      grade: studentResults.grade,
       subject: {
         id: subjects.id,
         name: subjects.name,
@@ -83,13 +82,12 @@ export async function GET(request: Request, { params }: { params: { registration
     // Always include results (null if not available)
     let resultsData: any = null
     if (results.length > 0) {
-      const resultsBySubject: { [subjectId: number]: { score: number; grade: string } } = {}
+      const resultsBySubject: { [subjectId: number]: { score: number } } = {}
       const subjectsData: Array<{ id: number; name: string; maxScore: number }> = []
 
       results.forEach((result: any) => {
         resultsBySubject[result.subjectId] = {
-          score: result.score,
-          grade: result.grade || ""
+          score: result.score
         }
         if (!subjectsData.find((s: any) => s.id === result.subjectId)) {
           subjectsData.push({
@@ -103,12 +101,6 @@ export async function GET(request: Request, { params }: { params: { registration
       const totalScore = results.reduce((sum: number, result: any) => sum + result.score, 0)
       const totalMaxScore = results.reduce((sum: number, result: any) => sum + result.subject.maxScore, 0)
       const averagePercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0
-      let overallGrade = "F"
-      if (averagePercentage >= 80) overallGrade = "A"
-      else if (averagePercentage >= 70) overallGrade = "B"
-      else if (averagePercentage >= 60) overallGrade = "C"
-      else if (averagePercentage >= 50) overallGrade = "D"
-      else if (averagePercentage >= 40) overallGrade = "E"
 
       resultsData = {
         subjects: subjectsData,
@@ -116,7 +108,6 @@ export async function GET(request: Request, { params }: { params: { registration
         totalScore,
         totalMaxScore,
         averagePercentage,
-        overallGrade,
         centerPosition: centerPosition > 0 ? centerPosition : undefined
       }
     }

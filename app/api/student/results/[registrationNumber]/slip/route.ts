@@ -87,13 +87,12 @@ export async function GET(request: Request, { params }: { params: { registration
     }
 
     // Process results for PDF generation
-    const resultsBySubject: { [subjectId: number]: { score: number; grade: string } } = {}
+    const resultsBySubject: { [subjectId: number]: { score: number } } = {}
     const subjectsData: Array<{ id: number; name: string; maxScore: number }> = []
 
     results.forEach(result => {
       resultsBySubject[result.subjectId] = {
-        score: result.score,
-        grade: result.grade
+        score: result.score
       }
       
       // Add subject if not already added
@@ -109,14 +108,6 @@ export async function GET(request: Request, { params }: { params: { registration
     const totalScore = results.reduce((sum, result) => sum + result.score, 0)
     const totalMaxScore = results.reduce((sum, result) => sum + result.subject.maxScore, 0)
     const averagePercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0
-    
-    // Calculate overall grade
-    let overallGrade = "F"
-    if (averagePercentage >= 80) overallGrade = "A"
-    else if (averagePercentage >= 70) overallGrade = "B"
-    else if (averagePercentage >= 60) overallGrade = "C"
-    else if (averagePercentage >= 50) overallGrade = "D"
-    else if (averagePercentage >= 40) overallGrade = "E"
 
     const resultSlipData = {
       student: {
@@ -135,7 +126,6 @@ export async function GET(request: Request, { params }: { params: { registration
       totalScore,
       totalMaxScore,
       averagePercentage,
-      overallGrade,
       centerPosition
     }
 
