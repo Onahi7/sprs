@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Search, Download, Users, BookOpen, Trophy, FileText, Medal, Award } from "lucide-react"
+import { Loader2, Search, Download, Users, BookOpen, Trophy, FileText, Medal, Award, ChevronDown } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { SubjectsManagement } from "./subjects-management"
 import { ResultEntryUsersManagement } from "./result-entry-users-management"
@@ -322,126 +323,177 @@ export function AdminResultsManagement() {
     setChapterBest10(chapterBest)
   }
 
-  const exportResults = () => {
-    const csvData = []
-    const headers = [
-      "Registration Number", "Student Name", "Chapter", "Class", 
-      ...subjects.map(s => `${s.name} Score`),
-      ...subjects.map(s => `${s.name} Grade`),
-      "Total Score", "Average %", "Overall Grade", "Entry Date"
-    ]
-    csvData.push(headers.join(","))
-
-    Object.values(filteredResults).forEach(studentData => {
-      const row = [
-        studentData.student.registrationNumber,
-        `"${studentData.student.firstName} ${studentData.student.lastName}"`,
-        studentData.student.chapterName,
-        studentData.student.class,
-        ...subjects.map(subject => {
-          const result = studentData.results.find(r => r.subjectId === subject.id)
-          return result ? result.score : ""
-        }),
-        ...subjects.map(subject => {
-          const result = studentData.results.find(r => r.subjectId === subject.id)
-          return result ? result.grade : ""
-        }),
-        studentData.totalScore,
-        studentData.averagePercentage.toFixed(1),
-        studentData.overallGrade,
-        studentData.results[0]?.enteredAt ? new Date(studentData.results[0].enteredAt).toLocaleDateString() : ""
-      ]
-      csvData.push(row.join(","))
-    })
-
-    const blob = new Blob([csvData.join("\n")], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `napps-results-export-${new Date().toISOString().split("T")[0]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-
-    toast({
-      title: "Export Complete",
-      description: "Results exported successfully"
-    })
-  }
-
-  const exportChapterBest = () => {
-    const csvData = []
-    const headers = [
-      "Chapter", "Position", "Registration Number", "Student Name", "Total Score", "Average %", "Overall Grade"
-    ]
-    csvData.push(headers.join(","))
-
-    chapterBest10.forEach(chapterData => {
-      chapterData.students.forEach(student => {
-        const row = [
-          chapterData.chapter,
-          student.position,
-          student.registrationNumber,
-          `"${student.name}"`,
-          student.totalScore,
-          student.averagePercentage.toFixed(1),
-          student.overallGrade
-        ]
-        csvData.push(row.join(","))
+  const exportResults = async (format: 'csv' | 'pdf' = 'csv') => {
+    try {
+      console.log('Starting export with format:', format)
+      const params = new URLSearchParams({
+        format,
+        type: 'all'
       })
-    })
+      
+      if (selectedChapter !== 'all') {
+        const chapter = chapters.find(c => c.name === selectedChapter)
+        if (chapter) {
+          params.append('chapterId', chapter.id.toString())
+        }
+      }
 
-    const blob = new Blob([csvData.join("\n")], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `napps-chapter-best-10-${new Date().toISOString().split("T")[0]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
+      const url = `/api/admin/results/export?${params.toString()}`
+      console.log('Fetching URL:', url)
+      const response = await fetch(url)
+      console.log('Response status:', response.status, response.statusText)
+      
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        
+        const fileExtension = format === 'pdf' ? 'pdf' : 'csv'
+        a.download = `napps-results-export-${new Date().toISOString().split("T")[0]}.${fileExtension}`
+        
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
 
-    toast({
-      title: "Export Complete",
-      description: "Chapter best performers exported successfully"
-    })
+        toast({
+          title: "Export Complete",
+          description: `Results exported successfully as ${format.toUpperCase()}`
+        })
+      } else {
+        // Try to get error message from response
+        let errorMessage = 'Export failed'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          // If can't parse JSON, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+        throw new Error(errorMessage)
+      }
+    } catch (error: any) {
+      console.error('Export error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export results. Please try again.",
+        variant: "destructive"
+      })
+    }
   }
 
-  const exportOverallBest = () => {
-    const csvData = []
-    const headers = [
-      "Position", "Registration Number", "Student Name", "Chapter", "Total Score", "Average %", "Overall Grade"
-    ]
-    csvData.push(headers.join(","))
+  const exportChapterBest = async (format: 'csv' | 'pdf' = 'csv') => {
+    try {
+      const params = new URLSearchParams({
+        format,
+        type: 'chapter-best'
+      })
 
-    overallBest10.forEach(student => {
-      const row = [
-        student.position,
-        student.registrationNumber,
-        `"${student.name}"`,
-        student.chapterName,
-        student.totalScore,
-        student.averagePercentage.toFixed(1),
-        student.overallGrade
-      ]
-      csvData.push(row.join(","))
-    })
+      const response = await fetch(`/api/admin/results/export?${params.toString()}`)
+      
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        
+        const fileExtension = format === 'pdf' ? 'pdf' : 'csv'
+        a.download = `napps-chapter-best-10-${new Date().toISOString().split("T")[0]}.${fileExtension}`
+        
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
 
-    const blob = new Blob([csvData.join("\n")], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `napps-overall-best-10-${new Date().toISOString().split("T")[0]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
+        toast({
+          title: "Export Complete",
+          description: `Chapter best performers exported successfully as ${format.toUpperCase()}`
+        })
+      } else {
+        // Try to get error message from response
+        let errorMessage = 'Export failed'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          // If can't parse JSON, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+        throw new Error(errorMessage)
+      }
+    } catch (error: any) {
+      console.error('Export error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export chapter best performers. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
 
-    toast({
-      title: "Export Complete",
-      description: "Overall best performers exported successfully"
-    })
+  const exportOverallBest = async (format: 'csv' | 'pdf' = 'csv') => {
+    try {
+      const params = new URLSearchParams({
+        format,
+        type: 'best10'
+      })
+
+      const response = await fetch(`/api/admin/results/export?${params.toString()}`)
+      
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        
+        const fileExtension = format === 'pdf' ? 'pdf' : 'csv'
+        a.download = `napps-overall-best-10-${new Date().toISOString().split("T")[0]}.${fileExtension}`
+        
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+
+        toast({
+          title: "Export Complete",
+          description: `Overall best performers exported successfully as ${format.toUpperCase()}`
+        })
+      } else {
+        // Try to get error message from response
+        let errorMessage = 'Export failed'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          // If can't parse JSON, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+        throw new Error(errorMessage)
+      }
+    } catch (error: any) {
+      console.error('Export error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export overall best performers. Please try again.",
+        variant: "destructive"
+      })
+    }
   }
 
   const uniqueClasses = [...new Set(Object.values(groupedResults).map(data => data.student.class))].sort()
@@ -589,10 +641,25 @@ export function AdminResultsManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={exportResults} variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => exportResults('csv')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportResults('pdf')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export as PDF (with Logo)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardContent>
           </Card>
@@ -714,10 +781,25 @@ export function AdminResultsManagement() {
                     Top 10 performing students from each chapter
                   </CardDescription>
                 </div>
-                <Button onClick={exportChapterBest} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Chapter Best
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Chapter Best
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => exportChapterBest('csv')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportChapterBest('pdf')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export as PDF (with Logo)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
             <CardContent>
@@ -818,10 +900,25 @@ export function AdminResultsManagement() {
                     Top 10 performing students across all chapters in the examination
                   </CardDescription>
                 </div>
-                <Button onClick={exportOverallBest} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Overall Best
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Overall Best
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => exportOverallBest('csv')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportOverallBest('pdf')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export as PDF (with Logo)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
             <CardContent>
